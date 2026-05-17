@@ -1,5 +1,35 @@
 .DS_Store
 *.log
+
+# Node / pnpm
 node_modules/
+.pnpm-store/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# 환경 변수
 .env
 .env.local
+.env.*.local
+
+# Prisma 7 생성 클라이언트 (output 경로)
+packages/database/src/generated/
+
+# Flutter
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/.packages
+apps/mobile/build/
+apps/mobile/ios/Pods/
+apps/mobile/ios/.symlinks/
+apps/mobile/android/.gradle/
+apps/mobile/android/local.properties
+apps/mobile/pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml

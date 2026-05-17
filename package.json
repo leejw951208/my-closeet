@@ -1,0 +1,24 @@
+{
+  "name": "my-closet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "My Closet 모노레포 루트. Flutter 모바일 앱 + NestJS API + Prisma 7 데이터 레이어.",
+  "packageManager": "pnpm@11.1.2",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "prisma:generate": "pnpm --filter @my-closet/database prisma:generate",
+    "prisma:migrate": "pnpm --filter @my-closet/database prisma:migrate",
+    "prisma:studio": "pnpm --filter @my-closet/database prisma:studio",
+    "api:dev": "pnpm --filter @my-closet/api start:dev",
+    "api:build": "pnpm --filter @my-closet/api build",
+    "api:test": "pnpm --filter @my-closet/api test",
+    "mobile:run": "cd apps/mobile && flutter run",
+    "mobile:test": "cd apps/mobile && flutter test"
+  }
+}

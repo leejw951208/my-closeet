@@ -1,0 +1,130 @@
+// Prisma 7 스키마. 생성기는 신규 prisma-client 모듈을 사용한다.
+// output 경로는 Prisma 7부터 필수이며, 패키지 src/generated/prisma 하위에 배치한다.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "cjs"
+  generatedFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// MVP 데이터 모델 초안. 본 모델은 docs/plan/pm/prd-mvp.md 6장 데이터 모델 설계와 일치한다.
+// User → Closet → Item, User → Outfit → (OutfitItem → Item).
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  provider  AuthProvider
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  closet   Closet?
+  outfits  Outfit[]
+  calendar CalendarEntry[]
+}
+
+model Closet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  items Item[]
+}
+
+model Item {
+  id            String        @id @default(cuid())
+  closetId      String
+  closet        Closet        @relation(fields: [closetId], references: [id], onDelete: Cascade)
+  photoUrl      String
+  category      ItemCategory
+  emoji         String?
+  colorHex      String?
+  brand         String?
+  season        Season?
+  aiConfidence  Float?
+  registeredAt  DateTime      @default(now())
+  deletedAt     DateTime?
+
+  outfitItems OutfitItem[]
+
+  @@index([closetId, category])
+}
+
+model Outfit {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  source      OutfitSource @default(MANUAL)
+  slotsFilled Int
+
+  items   OutfitItem[]
+  worn    CalendarEntry[]
+
+  @@index([userId, createdAt])
+}
+
+model OutfitItem {
+  outfitId String
+  itemId   String
+  slot     OutfitSlot
+  outfit   Outfit @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  item     Item   @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([outfitId, slot])
+  @@index([itemId])
+}
+
+model CalendarEntry {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfitId String
+  outfit   Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  wornDate DateTime @db.Date
+
+  @@unique([userId, wornDate])
+}
+
+enum AuthProvider {
+  KAKAO
+  APPLE
+  EMAIL
+}
+
+enum ItemCategory {
+  TOP
+  BOTTOM
+  DRESS
+  OUTER
+  SHOES
+  HAT
+  BAG
+  ACCESSORY
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ALL
+}
+
+enum OutfitSource {
+  MANUAL
+  SHUFFLE
+  RECOMMENDATION
+}
+
+enum OutfitSlot {
+  TOP
+  BOTTOM
+  OUTER
+  SHOES
+}

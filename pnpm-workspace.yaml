@@ -1,0 +1,9 @@
+packages:
+  - 'apps/api'
+  - 'packages/*'
+
+# pnpm 11 신뢰 빌드 스크립트 허용 목록. 각 패키지의 postinstall 등을 실행한다.
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/engines': true
+  prisma: true
