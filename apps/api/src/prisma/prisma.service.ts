@@ -4,15 +4,12 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@my-closet/database';
+import { AppConfigService } from '../config/app-config.service';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-  constructor() {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) {
-      throw new Error('DATABASE_URL 환경 변수가 설정되지 않았습니다.');
-    }
-    super({ adapter: new PrismaPg({ connectionString }) });
+  constructor(config: AppConfigService) {
+    super({ adapter: new PrismaPg({ connectionString: config.databaseUrl }) });
   }
 
   async onModuleInit(): Promise<void> {

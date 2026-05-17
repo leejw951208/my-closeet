@@ -14,9 +14,10 @@ datasource db {
 
 // MVP 데이터 모델 초안. 본 모델은 docs/plan/pm/prd-mvp.md 6장 데이터 모델 설계와 일치한다.
 // User → Closet → Item, User → Outfit → (OutfitItem → Item).
+// PK는 UUID v7 (RFC 9562, 시간 정렬 가능)을 사용해 인덱스 친화성과 분산 생성을 동시에 확보한다.
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid(7)) @db.Uuid
   email     String?  @unique
   provider  AuthProvider
   createdAt DateTime @default(now())
@@ -28,8 +29,8 @@ model User {
 }
 
 model Closet {
-  id        String   @id @default(cuid())
-  userId    String   @unique
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @unique @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
@@ -37,8 +38,8 @@ model Closet {
 }
 
 model Item {
-  id            String        @id @default(cuid())
-  closetId      String
+  id            String        @id @default(uuid(7)) @db.Uuid
+  closetId      String        @db.Uuid
   closet        Closet        @relation(fields: [closetId], references: [id], onDelete: Cascade)
   photoUrl      String
   category      ItemCategory
@@ -56,8 +57,8 @@ model Item {
 }
 
 model Outfit {
-  id          String   @id @default(cuid())
-  userId      String
+  id          String   @id @default(uuid(7)) @db.Uuid
+  userId      String   @db.Uuid
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   source      OutfitSource @default(MANUAL)
@@ -70,8 +71,8 @@ model Outfit {
 }
 
 model OutfitItem {
-  outfitId String
-  itemId   String
+  outfitId String     @db.Uuid
+  itemId   String     @db.Uuid
   slot     OutfitSlot
   outfit   Outfit @relation(fields: [outfitId], references: [id], onDelete: Cascade)
   item     Item   @relation(fields: [itemId], references: [id], onDelete: Restrict)
@@ -81,10 +82,10 @@ model OutfitItem {
 }
 
 model CalendarEntry {
-  id       String   @id @default(cuid())
-  userId   String
+  id       String   @id @default(uuid(7)) @db.Uuid
+  userId   String   @db.Uuid
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  outfitId String
+  outfitId String   @db.Uuid
   outfit   Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
   wornDate DateTime @db.Date
 
