@@ -1,33 +1,58 @@
-// My Closet 모바일 앱 진입점. 최소 Material 셸만 정의하며 본격 라우팅은 후속 작업에서 추가한다.
+// My Closet 모바일 앱 진입점. 환경 검증, Sentry 초기화, ProviderScope 마운트를 수행한다.
 
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
-void main() {
-  runApp(const ProviderScope(child: MyClosetApp()));
-}
+import 'app/app.dart';
+import 'app/env_error_app.dart';
+import 'core/env/app_env.dart';
+import 'core/logging/app_logger.dart';
+import 'core/logging/pii_filter.dart';
 
-class MyClosetApp extends StatelessWidget {
-  const MyClosetApp({super.key});
+Future<void> main() async {
+    await runZonedGuarded<Future<void>>(() async {
+        WidgetsFlutterBinding.ensureInitialized();
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'My Closet',
-      theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: const _HomePage(),
-    );
-  }
-}
+        final missing = AppEnv.validate();
+        if (missing.isNotEmpty) {
+            runApp(EnvErrorApp(missing: missing));
+            return;
+        }
 
-class _HomePage extends StatelessWidget {
-  const _HomePage();
+        FlutterError.onError = (details) {
+            FlutterError.presentError(details);
+            unawaited(
+                Sentry.captureException(
+                    details.exception,
+                    stackTrace: details.stack,
+                ),
+            );
+        };
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Closet')),
-      body: const Center(child: Text('옷장을 열기 전, 앱을 먼저 여세요.')),
-    );
-  }
+        Widget appRoot() => ProviderScope(
+            observers: [if (kDebugMode) LoggingObserver()],
+            child: const MyClosetApp(),
+        );
+
+        if (AppEnv.sentryDsn.isNotEmpty) {
+            await SentryFlutter.init(
+                (options) {
+                    options.dsn = AppEnv.sentryDsn;
+                    options.environment = AppEnv.environment;
+                    options.tracesSampleRate = 0.1;
+                    options.beforeSend = filterSentryEvent;
+                },
+                appRunner: () => runApp(appRoot()),
+            );
+        } else {
+            runApp(appRoot());
+        }
+    }, (error, stack) {
+        appLogger.e('Unhandled zone error', error: error, stackTrace: stack);
+        unawaited(Sentry.captureException(error, stackTrace: stack));
+    });
 }

@@ -1,14 +1,16 @@
-// 기본 위젯 스모크 테스트. 앱이 빌드되고 환영 문구가 노출되는지 확인한다.
+// 환경 변수 누락 시 EnvErrorApp이 누락 키를 표시하는지 확인하는 스모크 테스트.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:my_closet_mobile/main.dart';
+import 'package:my_closet_mobile/app/env_error_app.dart';
 
 void main() {
-  testWidgets('홈 화면이 환영 문구를 표시한다', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: MyClosetApp()));
-    expect(find.text('옷장을 열기 전, 앱을 먼저 여세요.'), findsOneWidget);
-  });
+    testWidgets('EnvErrorApp이 누락 키를 표시한다', (WidgetTester tester) async {
+        await tester.pumpWidget(
+            const EnvErrorApp(missing: ['API_BASE_URL']),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('환경 설정 누락'), findsOneWidget);
+        expect(find.text('· API_BASE_URL'), findsOneWidget);
+    });
 }
