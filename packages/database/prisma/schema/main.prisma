@@ -1,0 +1,13 @@
+// Prisma 7 스키마 폴더의 진입 파일. generator·datasource를 정의한다.
+// 도메인 모델은 같은 폴더의 user.prisma, closet.prisma, outfit.prisma, calendar.prisma에 분리한다.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../../src/generated/prisma"
+  moduleFormat           = "cjs"
+  generatedFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}

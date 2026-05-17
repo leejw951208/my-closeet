@@ -1,0 +1,49 @@
+// 옷장 도메인. Closet은 User 1:1, Item은 Closet 1:N.
+// 관련 PRD. docs/plan/pm/prd-mvp.md US-02·US-03·US-04·US-06·US-07.
+
+model Closet {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @unique @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  items Item[]
+}
+
+model Item {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  closetId     String       @db.Uuid
+  closet       Closet       @relation(fields: [closetId], references: [id], onDelete: Cascade)
+  photoUrl     String
+  category     ItemCategory
+  emoji        String?
+  colorHex     String?
+  brand        String?
+  season       Season?
+  aiConfidence Float?
+  registeredAt DateTime     @default(now())
+  deletedAt    DateTime?
+
+  outfitItems OutfitItem[]
+
+  @@index([closetId, category])
+}
+
+enum ItemCategory {
+  TOP
+  BOTTOM
+  DRESS
+  OUTER
+  SHOES
+  HAT
+  BAG
+  ACCESSORY
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ALL
+}

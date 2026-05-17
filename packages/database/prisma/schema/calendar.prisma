@@ -1,0 +1,13 @@
+// 캘린더 도메인. 사용자가 "오늘 입었음"으로 기록한 코디를 날짜별로 보관한다.
+// 관련 PRD. docs/plan/pm/prd-mvp.md US-10 (캘린더 기록).
+
+model CalendarEntry {
+  id       String   @id @default(uuid(7)) @db.Uuid
+  userId   String   @db.Uuid
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfitId String   @db.Uuid
+  outfit   Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  wornDate DateTime @db.Date
+
+  @@unique([userId, wornDate])
+}

@@ -1,0 +1,40 @@
+// 코디 도메인. Outfit과 옷-슬롯 매핑 OutfitItem을 정의한다.
+// 관련 PRD. docs/plan/pm/prd-mvp.md US-08 (마네킹 코디), US-09 (셔플).
+
+model Outfit {
+  id          String       @id @default(uuid(7)) @db.Uuid
+  userId      String       @db.Uuid
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  source      OutfitSource @default(MANUAL)
+  slotsFilled Int
+
+  items OutfitItem[]
+  worn  CalendarEntry[]
+
+  @@index([userId, createdAt])
+}
+
+model OutfitItem {
+  outfitId String     @db.Uuid
+  itemId   String     @db.Uuid
+  slot     OutfitSlot
+  outfit   Outfit     @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  item     Item       @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([outfitId, slot])
+  @@index([itemId])
+}
+
+enum OutfitSource {
+  MANUAL
+  SHUFFLE
+  RECOMMENDATION
+}
+
+enum OutfitSlot {
+  TOP
+  BOTTOM
+  OUTER
+  SHOES
+}

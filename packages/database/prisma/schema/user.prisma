@@ -1,0 +1,20 @@
+// 사용자 도메인. 가입 사용자와 인증 공급자 enum을 정의한다.
+// 관련 PRD. docs/plan/pm/prd-mvp.md US-01 (소셜 로그인).
+
+model User {
+  id        String       @id @default(uuid(7)) @db.Uuid
+  email     String?      @unique
+  provider  AuthProvider
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  closet   Closet?
+  outfits  Outfit[]
+  calendar CalendarEntry[]
+}
+
+enum AuthProvider {
+  KAKAO
+  APPLE
+  EMAIL
+}
