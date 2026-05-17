@@ -23,11 +23,11 @@ mkdir -p docs/plan/researcher
 
 본 스킬은 다음 PM 스킬을 **순차** 호출한다. 각 스킬의 결과를 받아 `docs/plan/researcher/` 아래 지정 파일명으로 저장한다.
 
-| 순서 | 호출 스킬 | 저장 경로 |
-|------|----------|----------|
-| 1 | `pm-product-discovery:discover` | `docs/plan/researcher/discovery-plan.md` |
-| 2 | `pm-market-research:research-users` | `docs/plan/researcher/user-personas.md` |
-| 3 | `pm-market-research:competitive-analysis` | `docs/plan/researcher/competitor-analysis.md` |
+| 순서 | 호출 스킬                                 | 저장 경로                                     |
+| ---- | ----------------------------------------- | --------------------------------------------- |
+| 1    | `pm-product-discovery:discover`           | `docs/plan/researcher/discovery-plan.md`      |
+| 2    | `pm-market-research:research-users`       | `docs/plan/researcher/user-personas.md`       |
+| 3    | `pm-market-research:competitive-analysis` | `docs/plan/researcher/competitor-analysis.md` |
 
 각 단계 진행 시 사용자에게 짧게 알린다. 예. "1/3. discovery 진행 중."
 

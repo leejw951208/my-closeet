@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+coverage
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# Prisma 생성 산출물
+packages/database/src/generated
+packages/database/prisma/migrations
+
+# Flutter (dart format이 담당)
+apps/mobile

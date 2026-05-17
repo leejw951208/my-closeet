@@ -47,6 +47,7 @@ echo "planning" > docs/features/$FEATURE_SLUG/phase.md
 `AskUserQuestion` 으로 사용자에게 묻는다.
 
 > 이 기능이 어느 단계인가요?
+>
 > - 아이디어 단계 (구체화 필요) — 무엇을/왜 만드는지 아직 명확하지 않음
 > - 요구사항 명확 (바로 계획 리뷰) — 무엇을 만들지 정해져 있음
 

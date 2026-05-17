@@ -24,10 +24,10 @@ mkdir -p docs/plan/risk
 
 ## 2. 실행 순서
 
-| 순서 | 호출 스킬 | 저장 경로 | 메모 |
-|------|----------|----------|------|
-| 1 | `pm-execution:pre-mortem` | `docs/plan/risk/pre-mortem.md` | Tigers·Paper Tigers·Elephants·Go/No-Go |
-| 2 | `pm-execution:test-scenarios` | `docs/plan/risk/test-scenarios.md` | Happy·Edge·Error·Security·Perf 시나리오 |
+| 순서 | 호출 스킬                     | 저장 경로                          | 메모                                    |
+| ---- | ----------------------------- | ---------------------------------- | --------------------------------------- |
+| 1    | `pm-execution:pre-mortem`     | `docs/plan/risk/pre-mortem.md`     | Tigers·Paper Tigers·Elephants·Go/No-Go  |
+| 2    | `pm-execution:test-scenarios` | `docs/plan/risk/test-scenarios.md` | Happy·Edge·Error·Security·Perf 시나리오 |
 
 각 단계 진행 시 사용자에게 짧게 알린다. 예. "1/2. pre-mortem 진행 중."
 

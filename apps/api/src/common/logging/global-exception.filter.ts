@@ -2,49 +2,54 @@
 // Sentry 실제 SDK 연동은 별도 작업으로 남기고 여기서는 후크 위치만 잡는다.
 
 import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
-import type { Request, Response } from 'express';
-import { AppConfigService } from '../../config/app-config.service';
+    ArgumentsHost,
+    Catch,
+    ExceptionFilter,
+    HttpException,
+    HttpStatus,
+    Logger,
+} from "@nestjs/common"
+import type { Request, Response } from "express"
+import { AppConfigService } from "../../config/app-config.service"
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger('Exception');
+    private readonly logger = new Logger("Exception")
 
-  constructor(private readonly config: AppConfigService) {}
+    constructor(private readonly config: AppConfigService) {}
 
-  catch(exception: unknown, host: ArgumentsHost): void {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    catch(exception: unknown, host: ArgumentsHost): void {
+        const ctx = host.switchToHttp()
+        const response = ctx.getResponse<Response>()
+        const request = ctx.getRequest<Request>()
 
-    const status =
-      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-    const message = exception instanceof Error ? exception.message : 'Unknown error';
+        const status =
+            exception instanceof HttpException
+                ? exception.getStatus()
+                : HttpStatus.INTERNAL_SERVER_ERROR
+        const message =
+            exception instanceof Error ? exception.message : "Unknown error"
 
-    if (status >= 500) {
-      this.logger.error(`${request.method} ${request.originalUrl} → ${status}: ${message}`);
-      this.forwardToSentry(exception);
+        if (status >= 500) {
+            this.logger.error(
+                `${request.method} ${request.originalUrl} → ${status}: ${message}`,
+            )
+            this.forwardToSentry(exception)
+        }
+
+        response.status(status).json({
+            statusCode: status,
+            path: request.originalUrl,
+            message,
+            timestamp: new Date().toISOString(),
+        })
     }
 
-    response.status(status).json({
-      statusCode: status,
-      path: request.originalUrl,
-      message,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
-  private forwardToSentry(error: unknown): void {
-    if (!this.config.sentryDsn) {
-      return;
+    private forwardToSentry(error: unknown): void {
+        if (!this.config.sentryDsn) {
+            return
+        }
+        // Sentry SDK 연동 후 captureException(error) 호출 위치.
+        void error
     }
-    // Sentry SDK 연동 후 captureException(error) 호출 위치.
-    void error;
-  }
 }

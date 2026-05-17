@@ -34,30 +34,30 @@
 
 ## 4. Critical Assumptions
 
-| # | Assumption | Category | Impact | Uncertainty | Priority |
-|---|------------|----------|--------|-------------|----------|
-| V1 | 사용자는 옷을 일일이 사진 찍어 등록할 의지가 있다 | Value | High | High | 🔴 1 |
-| B2 | 사용자가 코디 가치를 느낄 임계치(≥30벌)까지 등록을 이어간다 | Viability | High | High | 🔴 2 |
-| V3 | 앱 코디 도구가 거울·실착보다 충분한 가치를 준다 | Value | High | High | 🔴 3 |
-| V4 | 날씨 기반 추천이 의사결정 시간을 실제로 줄여준다 | Value | Med-High | Med | 🟡 4 |
-| F1 | AI 분류 정확도 ≥80% 달성 가능 | Feasibility | High | Med | 🟡 5 |
-| V5 | 중복구매 경고가 실제 구매 행동을 바꾼다 | Value | Med | High | 🟡 6 |
-| V2 | 이모지 표현이 지속 사용에 기여한다 | Value | Med | Med | 🟡 7 |
-| U1 | 사진→이모지 자동 매칭이 수동 보정 없이 직관적 | Usability | Med | Low-Med | 🟢 8 |
-| U2 | 마네킹 드래그&드롭이 모바일에서 직관적 | Usability | Med | Low-Med | 🟢 9 |
-| B1 | 무료 + 프리미엄 구조로 수익화 가능 | Viability | Med | High | 🟢 10 |
-| G1 | 1020 패션 관심층이 SNS로 자발 확산 | GTM | Med | Med | 🟢 11 |
-| G2 | 영수증·이미지 import로 등록 마찰 해소 가능 | GTM | Med | Med | 🟢 12 |
+| #   | Assumption                                                  | Category    | Impact   | Uncertainty | Priority |
+| --- | ----------------------------------------------------------- | ----------- | -------- | ----------- | -------- |
+| V1  | 사용자는 옷을 일일이 사진 찍어 등록할 의지가 있다           | Value       | High     | High        | 🔴 1     |
+| B2  | 사용자가 코디 가치를 느낄 임계치(≥30벌)까지 등록을 이어간다 | Viability   | High     | High        | 🔴 2     |
+| V3  | 앱 코디 도구가 거울·실착보다 충분한 가치를 준다             | Value       | High     | High        | 🔴 3     |
+| V4  | 날씨 기반 추천이 의사결정 시간을 실제로 줄여준다            | Value       | Med-High | Med         | 🟡 4     |
+| F1  | AI 분류 정확도 ≥80% 달성 가능                               | Feasibility | High     | Med         | 🟡 5     |
+| V5  | 중복구매 경고가 실제 구매 행동을 바꾼다                     | Value       | Med      | High        | 🟡 6     |
+| V2  | 이모지 표현이 지속 사용에 기여한다                          | Value       | Med      | Med         | 🟡 7     |
+| U1  | 사진→이모지 자동 매칭이 수동 보정 없이 직관적               | Usability   | Med      | Low-Med     | 🟢 8     |
+| U2  | 마네킹 드래그&드롭이 모바일에서 직관적                      | Usability   | Med      | Low-Med     | 🟢 9     |
+| B1  | 무료 + 프리미엄 구조로 수익화 가능                          | Viability   | Med      | High        | 🟢 10    |
+| G1  | 1020 패션 관심층이 SNS로 자발 확산                          | GTM         | Med      | Med         | 🟢 11    |
+| G2  | 영수증·이미지 import로 등록 마찰 해소 가능                  | GTM         | Med      | Med         | 🟢 12    |
 
 ## 5. Validation Experiments
 
-| # | Tests | Method | Success Criteria | Effort | Timeline |
-|---|-------|--------|------------------|--------|----------|
-| E1 | V1, B2 | 컨시어지 옷장 디지털화 (수동) | 응답률 ≥60%, 평균 등록 ≥20벌, 재사용 의향 ≥7/10 | S | 2주 |
-| E2 | V1, G1 | 페이크 도어 랜딩 + IG 광고 | CTR ≥1.5%, 가입 전환 ≥15%, CPA ≤2,000원 | S | 1주 |
-| E3 | V3, U2 | 종이 폴라로이드 코디 보드 사용성 | 8명 중 6명 5분 내 완성, 만족도 ≥7/10, 재사용 의향 ≥5명 | XS | 1주 |
-| E4 | F1 | 오픈 모델 PoC (SAM + CLIP/fashion classifier) | Top-1 ≥80%, Top-3 ≥95% | S | 3일 |
-| E5 | V4 | Wizard-of-Oz 날씨 추천 카톡 | 2주 retention ≥60%, NPS ≥30 | S | 2주 |
+| #   | Tests  | Method                                        | Success Criteria                                       | Effort | Timeline |
+| --- | ------ | --------------------------------------------- | ------------------------------------------------------ | ------ | -------- |
+| E1  | V1, B2 | 컨시어지 옷장 디지털화 (수동)                 | 응답률 ≥60%, 평균 등록 ≥20벌, 재사용 의향 ≥7/10        | S      | 2주      |
+| E2  | V1, G1 | 페이크 도어 랜딩 + IG 광고                    | CTR ≥1.5%, 가입 전환 ≥15%, CPA ≤2,000원                | S      | 1주      |
+| E3  | V3, U2 | 종이 폴라로이드 코디 보드 사용성              | 8명 중 6명 5분 내 완성, 만족도 ≥7/10, 재사용 의향 ≥5명 | XS     | 1주      |
+| E4  | F1     | 오픈 모델 PoC (SAM + CLIP/fashion classifier) | Top-1 ≥80%, Top-3 ≥95%                                 | S      | 3일      |
+| E5  | V4     | Wizard-of-Oz 날씨 추천 카톡                   | 2주 retention ≥60%, NPS ≥30                            | S      | 2주      |
 
 ### Experiment Details
 

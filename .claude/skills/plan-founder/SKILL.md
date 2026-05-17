@@ -22,11 +22,11 @@ mkdir -p docs/plan/founder
 
 ## 2. 실행 순서
 
-| 순서 | 호출 스킬 | 저장 경로 | 메모 |
-|------|----------|----------|------|
-| 1 | `pm-product-strategy:business-model` (startup 모드) | `docs/plan/founder/startup-canvas.md` | 비전·세그먼트·트레이드오프·수익 모델 통합 |
-| 2 | `pm-product-strategy:pricing` | `docs/plan/founder/pricing.md` | 가격 정책·민감도·경쟁사 비교 |
-| 3 | `pm-marketing-growth:north-star` | `docs/plan/founder/north-star.md` | 북극성·Input Metric·Counter-Metric |
+| 순서 | 호출 스킬                                           | 저장 경로                             | 메모                                      |
+| ---- | --------------------------------------------------- | ------------------------------------- | ----------------------------------------- |
+| 1    | `pm-product-strategy:business-model` (startup 모드) | `docs/plan/founder/startup-canvas.md` | 비전·세그먼트·트레이드오프·수익 모델 통합 |
+| 2    | `pm-product-strategy:pricing`                       | `docs/plan/founder/pricing.md`        | 가격 정책·민감도·경쟁사 비교              |
+| 3    | `pm-marketing-growth:north-star`                    | `docs/plan/founder/north-star.md`     | 북극성·Input Metric·Counter-Metric        |
 
 각 단계 진행 시 사용자에게 짧게 알린다. 예. "2/3. pricing 진행 중."
 

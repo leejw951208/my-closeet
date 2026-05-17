@@ -22,10 +22,10 @@ mkdir -p docs/plan/marketing
 
 ## 2. 실행 순서
 
-| 순서 | 호출 스킬 | 저장 경로 | 메모 |
-|------|----------|----------|------|
-| 1 | `pm-go-to-market:plan-launch` | `docs/plan/marketing/gtm-plan.md` | 비치헤드·ICP·채널·일정·KPI |
-| 2 | `pm-product-strategy:value-proposition` | `docs/plan/marketing/value-proposition.md` | LP·앱스토어·광고 카피용 한 줄 가치 (6-part JTBD) |
+| 순서 | 호출 스킬                               | 저장 경로                                  | 메모                                             |
+| ---- | --------------------------------------- | ------------------------------------------ | ------------------------------------------------ |
+| 1    | `pm-go-to-market:plan-launch`           | `docs/plan/marketing/gtm-plan.md`          | 비치헤드·ICP·채널·일정·KPI                       |
+| 2    | `pm-product-strategy:value-proposition` | `docs/plan/marketing/value-proposition.md` | LP·앱스토어·광고 카피용 한 줄 가치 (6-part JTBD) |
 
 각 단계 진행 시 사용자에게 짧게 알린다. 예. "2/2. value-proposition 진행 중."
 

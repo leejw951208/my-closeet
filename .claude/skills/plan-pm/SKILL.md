@@ -24,12 +24,12 @@ mkdir -p docs/plan/pm
 
 ## 2. 실행 순서
 
-| 순서 | 호출 스킬 | 저장 경로 |
-|------|----------|----------|
-| 1 | `pm-product-discovery:setup-metrics` | `docs/plan/pm/metrics-dashboard.md` |
-| 2 | `pm-execution:write-prd` | `docs/plan/pm/prd-mvp.md` |
-| 3 | `pm-execution:write-stories` (user 포맷) | `docs/plan/pm/user-stories.md` |
-| 4 | `pm-execution:plan-okrs` | `docs/plan/pm/okrs.md` |
+| 순서 | 호출 스킬                                | 저장 경로                           |
+| ---- | ---------------------------------------- | ----------------------------------- |
+| 1    | `pm-product-discovery:setup-metrics`     | `docs/plan/pm/metrics-dashboard.md` |
+| 2    | `pm-execution:write-prd`                 | `docs/plan/pm/prd-mvp.md`           |
+| 3    | `pm-execution:write-stories` (user 포맷) | `docs/plan/pm/user-stories.md`      |
+| 4    | `pm-execution:plan-okrs`                 | `docs/plan/pm/okrs.md`              |
 
 각 단계 진행 시 사용자에게 짧게 알린다. 예. "3/4. user-stories 진행 중."
 
