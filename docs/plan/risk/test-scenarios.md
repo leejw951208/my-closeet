@@ -5,7 +5,8 @@
 - **Source.** [../pm/user-stories.md](../pm/user-stories.md)
 - **관련 문서.** [pre-mortem.md](pre-mortem.md), [../pm/prd-mvp.md](../pm/prd-mvp.md)
 - **Total scenarios.** 42 (Happy 16, Edge 14, Error 9, Security 3).
-- **Coverage.** P0 스토리 19개 + P1 핵심 일부.
+- **Coverage.** P0 스토리 + P1 핵심 일부.
+- **v0.2 변경 (2026-05-17).** TS-A2 시리즈(5벌 챌린지)와 TS-G 시리즈(날씨 푸시)는 해당 스토리가 v1.5로 이연되며 **MVP QA 범위에서 제외**합니다. 시나리오는 v1.5 재기획 입력으로 보존합니다. 또한 TS-A1-01의 "5벌 챌린지 인트로 진입" 기대값은 "홈 화면 진입"으로 대체합니다.
 
 ---
 
@@ -59,7 +60,7 @@
 
 ---
 
-### TS-A2-01 [Happy] 5벌 챌린지 완주
+### TS-A2-01 [Happy] 5벌 챌린지 완주 — **v1.5 이연, MVP QA 제외**
 **Tests.** A2
 **Preconditions.** 신규 가입 직후, 갤러리에 옷 사진 ≥5장.
 
@@ -74,7 +75,7 @@
 
 ---
 
-### TS-A2-02 [Edge] 챌린지 중간 스킵 후 재진입
+### TS-A2-02 [Edge] 챌린지 중간 스킵 후 재진입 — **v1.5 이연, MVP QA 제외**
 **Tests.** A2
 | Step | Action | Expected |
 |------|--------|----------|
@@ -363,7 +364,9 @@
 
 ---
 
-## G. 추천·푸시
+## G. 추천·푸시 — **v1.5 이연, MVP QA 제외**
+
+> 본 섹션(TS-G1-01~03)은 US-11이 v1.5로 이연되며 MVP 테스트 범위에서 제외됩니다. 시나리오는 v1.5 재기획 시 입력으로 보존합니다. 재기획 시 "발송 트리거" 자체가 시각이 아닐 가능성이 높으므로, Preconditions("아침 9시 도달")과 Steps도 함께 재작성이 필요합니다.
 
 ### TS-G1-01 [Happy] 날씨 기반 일일 추천 푸시
 **Tests.** G1

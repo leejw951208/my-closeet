@@ -23,10 +23,7 @@
 | 이벤트 명 | 트리거 시점 | 추가 속성 |
 |----------|-----------|----------|
 | `sign_up` | 가입 완료 | provider (kakao/apple/email) |
-| `onboarding_challenge_start` | 5벌 챌린지 인트로 진입 | — |
-| `onboarding_challenge_progress` | 챌린지 중 옷 등록 | step (1~5) |
-| `onboarding_challenge_complete` | 5벌 등록 완료 | duration_seconds |
-| `onboarding_challenge_skip` | 챌린지 스킵 | step_at_skip |
+| ~~`onboarding_challenge_*`~~ | (v0.2) 5벌 챌린지가 v1.5로 이연되며 MVP 이벤트 카탈로그에서 제외. v1.5 재기획 시 동일 이름으로 부활 검토. | — |
 | `item_register` | 옷 1벌 등록 완료 | source (camera/gallery), batch_size (일괄 시), category_top1, ai_confidence, duration_seconds |
 | `item_category_correct` | 사용자가 카테고리 수정 | from_category, to_category |
 | `item_delete` | 옷 삭제 | days_since_register |
@@ -38,8 +35,7 @@
 | `outfit_wear` | "오늘 입기" 클릭 | outfit_id, days_since_outfit_create |
 | `outfit_share` | OOTD 공유 클릭 | outfit_id, destination (instagram_story/tiktok/etc) |
 | `outfit_delete` | 코디 삭제 | days_since_outfit_create |
-| `recommendation_push_send` | 일일 추천 푸시 발송 (서버) | weather_bucket, has_match |
-| `recommendation_push_open` | 푸시 탭 | hours_since_send |
+| ~~`recommendation_push_*`~~ | (v0.2) 날씨 추천 푸시가 v1.5로 이연되며 MVP 이벤트 카탈로그에서 제외. v1.5에서는 컨텍스트 트리거(예. `recommendation_trigger_type`) 속성을 추가해 부활. | — |
 | `calendar_view_open` | 캘린더 진입 | — |
 | `app_open` | 앱 진입 | source (icon/push/deeplink) |
 | `app_close` | 앱 종료 | session_duration_seconds |
@@ -72,7 +68,7 @@
 | H2. AI 카테고리 보정 비율 | `item_category_correct / item_register` | >25% |
 | H3. 등록 후 7일 내 삭제 비율 | `item_delete WHERE days_since_register <= 7 / item_register` | >15% |
 | H4. 코디 저장 후 1시간 내 삭제 | `outfit_delete WHERE minutes_since_create < 60 / outfit_save` | >10% |
-| H5. 푸시 OFF 비율 | `notification_disabled / WAU` | >30% |
+| H5. (v1.5 활성) 푸시 OFF 비율 | `notification_disabled / WAU` | >30% — MVP는 푸시 미출시이므로 미추적 |
 | H6. 크래시율 | `crash_users / DAU` | >0.5% |
 | H7. P95 화면 진입 시간 | 클라이언트 측정 | >2초 |
 | H8. /classify API P95 | 서버 측정 | >2.5초 |
