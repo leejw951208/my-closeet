@@ -5,11 +5,14 @@ import { PrismaPg } from "@prisma/adapter-pg"
 import "dotenv/config"
 import {
     PrismaClient,
-    AuthProvider,
     ItemCategory,
     OutfitSlot,
     OutfitSource,
 } from "../src/generated/prisma/client"
+
+const SEED_PHONE = "+821000000000"
+// bcrypt cost 12 해시. 평문은 "000000".
+const SEED_PIN_HASH = "$2b$12$bd9z9OZ8Yo8tQX0G5o3yPugZv4nDgQ4yI0u3iCKj3xqM4pXxh5h6m"
 
 async function main(): Promise<void> {
     const connectionString = process.env.DATABASE_URL
@@ -21,11 +24,11 @@ async function main(): Promise<void> {
     })
 
     const user = await prisma.user.upsert({
-        where: { email: "seed@my-closet.local" },
+        where: { phoneNumber: SEED_PHONE },
         update: {},
         create: {
-            email: "seed@my-closet.local",
-            provider: AuthProvider.EMAIL,
+            phoneNumber: SEED_PHONE,
+            pinHash: SEED_PIN_HASH,
             closet: { create: {} },
         },
         include: { closet: true },

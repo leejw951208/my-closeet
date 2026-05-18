@@ -1,20 +1,20 @@
-// 사용자 도메인. 가입 사용자와 인증 공급자 enum을 정의한다.
-// 관련 PRD. docs/plan/pm/prd-mvp.md US-01 (소셜 로그인).
+// 사용자 도메인. 휴대폰 번호 기반 가입 사용자와 PIN·잠금 상태를 보관한다.
+// 관련 문서. docs/features/auth-login/spec.md
 
 model User {
-  id        String       @id @default(uuid(7)) @db.Uuid
-  email     String?      @unique
-  provider  AuthProvider
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id              String    @id @default(uuid(7)) @db.Uuid
+  phoneNumber     String    @unique
+  pinHash         String
+  pinFailedCount  Int       @default(0)
+  pinLockedUntil  DateTime?
+  lastSignInAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  closet   Closet?
-  outfits  Outfit[]
-  calendar CalendarEntry[]
-}
-
-enum AuthProvider {
-  KAKAO
-  APPLE
-  EMAIL
+  closet         Closet?
+  outfits        Outfit[]
+  calendar       CalendarEntry[]
+  refreshTokens  RefreshToken[]
+  phoneChanges   PhoneChangeLog[]
+  pinResets      PinResetLog[]
 }

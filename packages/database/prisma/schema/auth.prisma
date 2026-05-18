@@ -1,0 +1,55 @@
+// 인증 도메인. OTP 요청, refresh token, 감사 로그.
+// 관련 문서. docs/features/auth-login/spec.md
+
+model OtpRequest {
+  id                 String     @id @default(uuid(7)) @db.Uuid
+  phoneNumber        String
+  codeHash           String
+  purpose            OtpPurpose
+  createdAt          DateTime   @default(now())
+  expiresAt          DateTime
+  consumedAt         DateTime?
+  // verify 시도 누적 카운터. PIN-style brute force 차단(5회 시 강제 consume).
+  verifyAttempts     Int        @default(0)
+  // OTP 세션 토큰 소비 시각. signup/reset/phoneChange는 1회만 진입 가능.
+  sessionConsumedAt  DateTime?
+
+  @@index([phoneNumber, createdAt])
+}
+
+enum OtpPurpose {
+  SIGNUP
+  RESET
+  PHONE_CHANGE
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // 토큰의 prefix(UUID)로부터 도출한 lookup 키. 단일 row 조회용 unique 인덱스.
+  lookupKey String    @unique
+  tokenHash String
+  deviceId  String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model PhoneChangeLog {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  oldPhone  String
+  newPhone  String
+  changedAt DateTime @default(now())
+}
+
+model PinResetLog {
+  id      String   @id @default(uuid(7)) @db.Uuid
+  userId  String   @db.Uuid
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resetAt DateTime @default(now())
+}
