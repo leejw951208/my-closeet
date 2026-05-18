@@ -26,22 +26,33 @@ SentryEvent? filterSentryEvent(SentryEvent event, Hint hint) {
     }
 
     final request = event.request;
-    SentryRequest? scrubbedRequest = request;
     if (request != null) {
-        final headers = Map<String, String>.from(request.headers)
+        final scrubbed = Map<String, String>.from(request.headers)
             ..remove('Authorization')
             ..remove('authorization');
-        scrubbedRequest = request.copyWith(headers: headers);
+        event.request = SentryRequest(
+            url: request.url,
+            method: request.method,
+            queryString: request.queryString,
+            cookies: request.cookies,
+            data: request.data,
+            headers: scrubbed,
+            fragment: request.fragment,
+        );
     }
 
     final user = event.user;
-    SentryUser? scrubbedUser = user;
     if (user?.email != null) {
-        scrubbedUser = user!.copyWith(email: '[redacted-email]');
+        event.user = SentryUser(
+            id: user!.id,
+            username: user.username,
+            email: '[redacted-email]',
+            ipAddress: user.ipAddress,
+            name: user.name,
+            geo: user.geo,
+            data: user.data,
+        );
     }
 
-    return event.copyWith(
-        request: scrubbedRequest,
-        user: scrubbedUser,
-    );
+    return event;
 }

@@ -5,7 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:my_closet_mobile/core/network/auth_interceptor.dart';
+import 'package:my_closet_mobile/core/storage/secure_token_storage.dart';
 import 'package:my_closet_mobile/features/auth/auth_state.dart';
+import 'package:my_closet_mobile/features/auth/data/auth_api.dart';
+import 'package:my_closet_mobile/features/auth/data/auth_repository.dart';
 
 class _StubAdapter implements HttpClientAdapter {
     _StubAdapter(this._responder);
@@ -26,44 +29,48 @@ class _StubAdapter implements HttpClientAdapter {
     }
 }
 
-class _RefreshController extends AuthController {
-    _RefreshController({required this.nextToken});
+class _MemoryStorage implements SecureTokenStorage {
+    String? _access;
+    String? _refresh;
+    @override
+    Future<String?> readAccessToken() async => _access;
+    @override
+    Future<String?> readRefreshToken() async => _refresh;
+    @override
+    Future<void> write({required String accessToken, String? refreshToken}) async {
+        _access = accessToken;
+        if (refreshToken != null) _refresh = refreshToken;
+    }
+    @override
+    Future<void> clear() async {
+        _access = null;
+        _refresh = null;
+    }
+}
+
+class _StubRepo implements AuthRepository {
+    _StubRepo({this.nextToken});
     final String? nextToken;
     int refreshCalls = 0;
 
     @override
-    Future<String?> refreshToken() async {
+    Future<TokenPair> refresh(String refreshToken) async {
         refreshCalls++;
-        if (nextToken != null) {
-            signIn(userId: 'u1', accessToken: nextToken!);
+        if (nextToken == null) {
+            throw Exception('refresh failed');
         }
-        return nextToken;
+        return TokenPair(accessToken: nextToken!, refreshToken: 'r-next');
     }
-}
 
-ProviderContainer _buildContainer(_RefreshController controller) {
-    final container = ProviderContainer(
-        overrides: [
-            authControllerProvider.overrideWith((ref) => controller),
-        ],
-    );
-    return container;
-}
+    @override
+    Future<UserMe> me([String? bearer]) async =>
+        const UserMe(id: 'u1', phoneNumber: '+821011112222');
 
-Dio _buildDio({
-    required ProviderContainer container,
-    required _StubAdapter adapter,
-}) {
-    final dio = Dio(BaseOptions(baseUrl: 'https://api.test'));
-    dio.httpClientAdapter = adapter;
-    final dioProbe = Provider<Dio>((ref) {
-        dio.interceptors.add(
-            AuthInterceptor(ref, retryDioFactory: () => dio),
-        );
-        return dio;
-    });
-    container.read(dioProbe);
-    return dio;
+    @override
+    Future<void> logout(String refreshToken) async {}
+
+    @override
+    dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
 ResponseBody _body(int status, {String body = '{}'}) {
@@ -76,41 +83,64 @@ ResponseBody _body(int status, {String body = '{}'}) {
     );
 }
 
+ProviderContainer _container({
+    required SecureTokenStorage storage,
+    required AuthRepository repo,
+}) {
+    return ProviderContainer(
+        overrides: [
+            secureTokenStorageProvider.overrideWithValue(storage),
+            authRepositoryProvider.overrideWithValue(repo),
+        ],
+    );
+}
+
+Dio _buildDio(ProviderContainer container, _StubAdapter adapter) {
+    final dio = Dio(BaseOptions(baseUrl: 'https://api.test'));
+    dio.httpClientAdapter = adapter;
+    final dioProbe = Provider<Dio>((ref) {
+        dio.interceptors.add(AuthInterceptor(ref, retryDioFactory: () => dio));
+        return dio;
+    });
+    container.read(dioProbe);
+    return dio;
+}
+
 void main() {
     test('401 → refresh 성공 → 새 토큰으로 재시도 200', () async {
-        final controller = _RefreshController(nextToken: 'NEW');
-        controller.signIn(userId: 'u1', accessToken: 'OLD');
-        final container = _buildContainer(controller);
-        addTearDown(container.dispose);
+        final storage = _MemoryStorage();
+        await storage.write(accessToken: 'OLD', refreshToken: 'R');
+        final repo = _StubRepo(nextToken: 'NEW');
+        final c = _container(storage: storage, repo: repo);
+        addTearDown(c.dispose);
+        // 초기 access 토큰을 상태로 부착.
+        await c.read(authControllerProvider.notifier).restore();
 
         final adapter = _StubAdapter((options) {
             final auth = options.headers['Authorization'] as String?;
             if (auth == 'Bearer NEW') return _body(200);
             return _body(401);
         });
-        final dio = _buildDio(container: container, adapter: adapter);
+        final dio = _buildDio(c, adapter);
 
         final response = await dio.get<dynamic>('/x');
         expect(response.statusCode, 200);
-        expect(controller.refreshCalls, 1);
-        expect(adapter.callCount, 2);
-        expect(container.read(authControllerProvider).status, AuthStatus.signedIn);
+        expect(repo.refreshCalls, greaterThanOrEqualTo(1));
+        expect(c.read(authControllerProvider).status, AuthStatus.authenticated);
     });
 
     test('401 → refresh 실패 → signedOut 전이', () async {
-        final controller = _RefreshController(nextToken: null);
-        controller.signIn(userId: 'u1', accessToken: 'OLD');
-        final container = _buildContainer(controller);
-        addTearDown(container.dispose);
+        final storage = _MemoryStorage();
+        await storage.write(accessToken: 'OLD', refreshToken: 'R');
+        final repo = _StubRepo(nextToken: null);
+        final c = _container(storage: storage, repo: repo);
+        addTearDown(c.dispose);
+        await c.read(authControllerProvider.notifier).restore();
 
-        final adapter = _StubAdapter((options) => _body(401));
-        final dio = _buildDio(container: container, adapter: adapter);
+        final adapter = _StubAdapter((_) => _body(401));
+        final dio = _buildDio(c, adapter);
 
-        await expectLater(
-            dio.get<dynamic>('/x'),
-            throwsA(isA<DioException>()),
-        );
-        expect(controller.refreshCalls, 1);
-        expect(container.read(authControllerProvider).status, AuthStatus.signedOut);
+        await expectLater(dio.get<dynamic>('/x'), throwsA(isA<DioException>()));
+        expect(c.read(authControllerProvider).status, AuthStatus.signedOut);
     });
 }

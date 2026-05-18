@@ -1,4 +1,4 @@
-package com.mycloset.my_closet_mobile
+package com.myclosets.app
 
 import io.flutter.embedding.android.FlutterActivity
 
