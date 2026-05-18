@@ -49,7 +49,10 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
         setState(() {});
         if (_pinController.text.length == 6 && _stage == _PinStage.entry) {
             setState(() => _stage = _PinStage.confirm);
-            WidgetsBinding.instance.addPostFrameCallback((_) => _focusConfirm.requestFocus());
+            _focusEntry.unfocus();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+                FocusScope.of(context).requestFocus(_focusConfirm);
+            });
         }
     }
 
@@ -114,7 +117,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
             ref.read(signupFlowStateProvider.notifier).reset();
             if (mounted) context.go('/');
         } catch (_) {
-            setState(() => _error = 'PIN 설정에 실패했어요. 쉽게 추측되는 PIN(111111 등)은 사용할 수 없어요.');
+            setState(() => _error = 'PIN 설정에 실패했어요. 잠시 후 다시 시도해주세요.');
         } finally {
             if (mounted) setState(() => _busy = false);
         }
@@ -164,7 +167,11 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                             ),
                             const SizedBox(height: 36),
                             GestureDetector(
-                                onTap: () => _focusEntry.requestFocus(),
+                                onTap: () {
+                                    setState(() => _stage = _PinStage.entry);
+                                    _focusConfirm.unfocus();
+                                    _focusEntry.requestFocus();
+                                },
                                 behavior: HitTestBehavior.opaque,
                                 child: _PinRow(
                                     label: '1차 입력',
@@ -175,7 +182,11 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                             ),
                             const SizedBox(height: 22),
                             GestureDetector(
-                                onTap: () => _focusConfirm.requestFocus(),
+                                onTap: () {
+                                    setState(() => _stage = _PinStage.confirm);
+                                    _focusEntry.unfocus();
+                                    _focusConfirm.requestFocus();
+                                },
                                 behavior: HitTestBehavior.opaque,
                                 child: _PinRow(
                                     label: '2차 확인',
@@ -185,20 +196,19 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                                     active: inConfirm,
                                 ),
                             ),
-                            // 시스템 키보드 입력만 받는 숨김 TextField. RenderEditable이 layout되어야 IME가 정상 동작하므로 1×1 투명으로 노출한다.
-                            SizedBox(
-                                height: 1,
-                                child: Row(
-                                    children: [
-                                        Expanded(child: _hiddenInput(_pinController, _focusEntry)),
-                                        Expanded(child: _hiddenInput(_confirmController, _focusConfirm)),
-                                    ],
+                            // 시스템 키보드 입력만 받는 숨김 TextField. web에서 IME가 동작하도록 40px 높이를 두되, IgnorePointer로 마우스 hit를 통과시켜 dot row 클릭이 가려지지 않게 한다.
+                            IgnorePointer(
+                                child: SizedBox(
+                                    height: 40,
+                                    child: inConfirm
+                                        ? _hiddenInput(_confirmController, _focusConfirm)
+                                        : _hiddenInput(_pinController, _focusEntry),
                                 ),
                             ),
                             const SizedBox(height: 26),
                             const SoftCard(
                                 child: Text(
-                                    '쉽게 추측 가능한 번호는 피해주세요 (생년월일·연속된 숫자 등). PIN은 기기 안에서만 안전하게 저장돼요.',
+                                    'PIN은 기기 안에서만 안전하게 저장돼요.',
                                     style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
@@ -245,7 +255,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                 keyboardType: TextInputType.number,
                 obscureText: true,
                 maxLength: 6,
-                autofocus: false,
+                autofocus: true,
                 showCursor: false,
                 enableInteractiveSelection: false,
                 inputFormatters: [
@@ -277,49 +287,67 @@ class _PinRow extends StatelessWidget {
 
     @override
     Widget build(BuildContext context) {
-        return Row(
-            children: [
-                SizedBox(
-                    width: 64,
-                    child: Text(
-                        label,
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: active ? AppColors.ink : AppColors.ink2,
+        return Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: active ? AppColors.peachInk : Colors.transparent,
+                    width: 1.5,
+                ),
+            ),
+            child: Row(
+                children: [
+                    SizedBox(
+                        width: 64,
+                        child: Text(
+                            label,
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: active ? AppColors.peachInk : AppColors.ink2,
+                            ),
                         ),
                     ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                            for (var i = 0; i < 6; i++) ...[
-                                Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: i < length
-                                            ? (completed
-                                                ? AppColors.mintInk.withValues(alpha: 0.6)
-                                                : AppColors.peachInk)
-                                            : AppColors.line,
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                                for (var i = 0; i < 6; i++) ...[
+                                    Container(
+                                        width: 12,
+                                        height: 12,
+                                        decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: i < length
+                                                ? (completed
+                                                    ? AppColors.mintInk.withValues(alpha: 0.6)
+                                                    : AppColors.peachInk)
+                                                : (active && i == length
+                                                    ? Colors.white
+                                                    : AppColors.line),
+                                            border: active && i == length
+                                                ? Border.all(
+                                                    color: AppColors.peachInk,
+                                                    width: 2,
+                                                )
+                                                : null,
+                                        ),
                                     ),
-                                ),
-                                if (i != 5) const SizedBox(width: 8),
+                                    if (i != 5) const SizedBox(width: 8),
+                                ],
+                                if (completed) ...[
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.check,
+                                        size: 14, color: AppColors.mintInk),
+                                ],
                             ],
-                            if (completed) ...[
-                                const SizedBox(width: 8),
-                                const Icon(Icons.check,
-                                    size: 14, color: AppColors.mintInk),
-                            ],
-                        ],
+                        ),
                     ),
-                ),
-                const SizedBox(width: 64),
-            ],
+                    const SizedBox(width: 64),
+                ],
+            ),
         );
     }
 }

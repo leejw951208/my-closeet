@@ -148,11 +148,10 @@ void main() {
         // 초기에는 1차 입력이 active. "PIN 6자리를 입력해주세요" 안내가 보인다.
         expect(find.text('PIN 6자리를 입력해주세요'), findsOneWidget);
 
-        final fields = find.byType(TextField);
-        expect(fields, findsNWidgets(2));
-
-        await tester.enterText(fields.first, '135790');
-        await tester.pump();
+        // stage별 hidden input은 항상 1개만 렌더된다.
+        expect(find.byType(TextField), findsOneWidget);
+        await tester.enterText(find.byType(TextField), '135790');
+        await tester.pumpAndSettle();
 
         // 2차 단계로 전이 → 안내 텍스트 교체.
         expect(find.text('한 번 더 입력해 확인해주세요'), findsOneWidget);
@@ -164,11 +163,12 @@ void main() {
         await tester.pumpWidget(_wrap(const PinSetupScreen()));
         await tester.pumpAndSettle();
 
-        final fields = find.byType(TextField);
-        await tester.enterText(fields.first, '135790');
-        await tester.pump();
-        await tester.enterText(fields.at(1), '246801');
-        await tester.pump();
+        // 1차 입력.
+        await tester.enterText(find.byType(TextField), '135790');
+        await tester.pumpAndSettle();
+        // 2차 단계로 전이됐고 단일 TextField는 confirm controller에 연결.
+        await tester.enterText(find.byType(TextField), '246801');
+        await tester.pumpAndSettle();
 
         // 둘 다 6자리이므로 "가입 완료" 버튼 활성화.
         final cta = find.widgetWithText(PrimaryButton, '가입 완료');
