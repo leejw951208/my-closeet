@@ -3,17 +3,15 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/auth/auth_state.dart';
+import 'auth_callbacks.dart';
 
 typedef DioFactory = Dio Function();
 
 class AuthInterceptor extends Interceptor {
-    AuthInterceptor(this._ref, {required DioFactory retryDioFactory})
+    AuthInterceptor({required DioFactory retryDioFactory})
         : _retryDioFactory = retryDioFactory;
 
-    final Ref _ref;
     final DioFactory _retryDioFactory;
     Future<String?>? _inflightRefresh;
 
@@ -23,7 +21,7 @@ class AuthInterceptor extends Interceptor {
         RequestInterceptorHandler handler,
     ) {
         if (options.headers['Authorization'] == null) {
-            final token = _ref.read(authControllerProvider).accessToken;
+            final token = authCallbacks.getAccessToken?.call();
             if (token != null && token.isNotEmpty) {
                 options.headers['Authorization'] = 'Bearer $token';
             }
@@ -43,10 +41,9 @@ class AuthInterceptor extends Interceptor {
             return;
         }
 
-        final controller = _ref.read(authControllerProvider.notifier);
-        final newToken = await _refreshOnce(controller);
+        final newToken = await _refreshOnce();
         if (newToken == null) {
-            controller.signOut();
+            authCallbacks.onUnauthorized?.call();
             handler.next(err);
             return;
         }
@@ -62,8 +59,10 @@ class AuthInterceptor extends Interceptor {
         }
     }
 
-    Future<String?> _refreshOnce(AuthController controller) {
-        return _inflightRefresh ??= controller.refreshToken().whenComplete(() {
+    Future<String?> _refreshOnce() {
+        final refresher = authCallbacks.refreshAccessToken;
+        if (refresher == null) return Future.value(null);
+        return _inflightRefresh ??= refresher().whenComplete(() {
             _inflightRefresh = null;
         });
     }

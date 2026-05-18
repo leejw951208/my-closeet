@@ -8,7 +8,7 @@ import '../env/app_env.dart';
 import 'auth_interceptor.dart';
 import 'error_interceptor.dart';
 
-Dio buildApiClient({required Ref ref, required String baseUrl}) {
+Dio buildApiClient({required String baseUrl}) {
     final dio = Dio(
         BaseOptions(
             baseUrl: baseUrl,
@@ -18,7 +18,7 @@ Dio buildApiClient({required Ref ref, required String baseUrl}) {
         ),
     );
     dio.interceptors.add(
-        AuthInterceptor(ref, retryDioFactory: () => dio),
+        AuthInterceptor(retryDioFactory: () => dio),
     );
     dio.interceptors.add(ErrorInterceptor());
     if (kDebugMode) {
@@ -35,5 +35,5 @@ Dio buildApiClient({required Ref ref, required String baseUrl}) {
 }
 
 final apiClientProvider = Provider<Dio>((ref) {
-    return buildApiClient(ref: ref, baseUrl: AppEnv.apiBaseUrl);
+    return buildApiClient(baseUrl: AppEnv.apiBaseUrl);
 });

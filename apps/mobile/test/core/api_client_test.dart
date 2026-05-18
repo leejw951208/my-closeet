@@ -11,7 +11,7 @@ import 'package:my_closet_mobile/core/network/error_interceptor.dart';
 void main() {
     test('buildApiClient는 Auth/Error 인터셉터를 등록한다', () {
         final probe = Provider<Dio>((ref) {
-            return buildApiClient(ref: ref, baseUrl: 'https://api.test');
+            return buildApiClient(baseUrl: 'https://api.test');
         });
         final container = ProviderContainer();
         addTearDown(container.dispose);
