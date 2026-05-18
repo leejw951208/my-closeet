@@ -1,7 +1,8 @@
 // 부팅 시점에 환경 변수 형식·필수값을 검증하는 클래스. 누락·오타가 있으면 즉시 부팅을 중단한다.
 
-import { Type, plainToInstance } from "class-transformer"
+import { Transform, Type, plainToInstance } from "class-transformer"
 import {
+    IsBoolean,
     IsEnum,
     IsInt,
     IsOptional,
@@ -9,8 +10,15 @@ import {
     IsUrl,
     Max,
     Min,
+    MinLength,
     validateSync,
 } from "class-validator"
+
+function toBool({ value }: { value: unknown }): boolean {
+    if (typeof value === "boolean") return value
+    if (typeof value === "string") return value.toLowerCase() === "true"
+    return false
+}
 
 export enum AppEnvironment {
     Development = "development",
@@ -42,6 +50,41 @@ export class AppConfigSchema {
     @IsOptional()
     @IsString()
     STORAGE_BUCKET?: string
+
+    @Transform(toBool)
+    @IsBoolean()
+    SMS_DEV_MODE = false
+
+    @IsOptional()
+    @IsString()
+    SOLAPI_API_KEY?: string
+
+    @IsOptional()
+    @IsString()
+    SOLAPI_API_SECRET?: string
+
+    @IsOptional()
+    @IsString()
+    SOLAPI_SENDER?: string
+
+    @IsString()
+    @MinLength(32)
+    JWT_SECRET!: string
+
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    JWT_ACCESS_TTL_MIN = 30
+
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    JWT_REFRESH_TTL_DAYS = 30
+
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    OTP_SESSION_TTL_MIN = 5
 }
 
 export function validateAppConfig(

@@ -37,4 +37,36 @@ export class AppConfigService {
     get isProduction(): boolean {
         return this.nodeEnv === AppEnvironment.Production
     }
+
+    get smsDevMode(): boolean {
+        return this.configService.get("SMS_DEV_MODE", { infer: true })
+    }
+
+    get solapiApiKey(): string | undefined {
+        return this.configService.get("SOLAPI_API_KEY", { infer: true })
+    }
+
+    get solapiApiSecret(): string | undefined {
+        return this.configService.get("SOLAPI_API_SECRET", { infer: true })
+    }
+
+    get solapiSender(): string | undefined {
+        return this.configService.get("SOLAPI_SENDER", { infer: true })
+    }
+
+    get jwtSecret(): string {
+        return this.configService.get("JWT_SECRET", { infer: true })
+    }
+
+    get jwtAccessTtlMin(): number {
+        return this.configService.get("JWT_ACCESS_TTL_MIN", { infer: true })
+    }
+
+    get jwtRefreshTtlDays(): number {
+        return this.configService.get("JWT_REFRESH_TTL_DAYS", { infer: true })
+    }
+
+    get otpSessionTtlMin(): number {
+        return this.configService.get("OTP_SESSION_TTL_MIN", { infer: true })
+    }
 }

@@ -3,11 +3,21 @@
 import "reflect-metadata"
 import { ValidationPipe } from "@nestjs/common"
 import { NestFactory } from "@nestjs/core"
+import helmet from "helmet"
 import { AppModule } from "./app.module"
 import { AppConfigService } from "./config/app-config.service"
 
 async function bootstrap(): Promise<void> {
     const app = await NestFactory.create(AppModule)
+    app.use(
+        helmet({
+            hsts: {
+                maxAge: 31_536_000,
+                includeSubDomains: true,
+                preload: true,
+            },
+        }),
+    )
     app.useGlobalPipes(
         new ValidationPipe({
             whitelist: true,
