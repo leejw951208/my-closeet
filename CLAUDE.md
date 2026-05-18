@@ -69,7 +69,7 @@
 **커밋 제목은 `타입: 메시지` 형식으로 작성한다.**
 
 - 타입은 컨벤셔널 커밋 키워드를 사용한다. `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `style`, `perf`, `build`, `ci`.
-- 스코프는 선택이다. 모듈·앱·슬러그 단위로 적는다. 예. `feat: ...`, `docs: ...`, `chore: ...`.
+- 모듈·앱·슬러그 단위로 적는다. 예. `feat: ...`, `docs: ...`, `chore: ...`.
 - 메시지는 한국어로 간결하게 작성한다.
 - 좋은 예. `feat: SMS OTP 발송 엔드포인트 추가`, `chore: .env.example에 JWT_SECRET 항목 추가`.
 - 나쁜 예. `update`, `버그 수정`, `WIP`.
