@@ -46,7 +46,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             final isAuthRoute = loc.startsWith('/auth/');
             if (auth.status == AuthStatus.unknown) return null;
             if (auth.status == AuthStatus.signedOut && !isAuthRoute) {
-                return AppRoute.pinLogin.path;
+                return auth.lastKnownPhoneNumber != null
+                    ? AppRoute.pinLogin.path
+                    : AppRoute.onboardingConsent.path;
             }
             if (auth.status == AuthStatus.authenticated && isAuthRoute) {
                 return AppRoute.home.path;

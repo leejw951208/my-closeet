@@ -1,4 +1,5 @@
 // 평소 로그인 화면. 부팅 시 생체인식 자동 시도(등록 시) → 실패·미등록 시 PIN 6자리 입력.
+// 휴대폰 번호는 마지막 로그인 값을 SecureStorage(authPrefs)에서 가져와 자동 사용한다(mockup 1.6).
 
 import 'dart:async';
 
@@ -10,9 +11,9 @@ import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/num_pad.dart';
+import '../../../shared/widgets/pin_dots.dart';
 import '../../../shared/widgets/soft_card.dart';
 import '../auth_state.dart';
 import '../data/auth_prefs.dart';
@@ -27,8 +28,7 @@ class PinLoginScreen extends ConsumerStatefulWidget {
 }
 
 class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
-    final _phoneController = TextEditingController();
-    final _pinController = TextEditingController();
+    final List<String> _digits = [];
     bool _busy = false;
     String? _error;
     bool _biometricTried = false;
@@ -38,8 +38,6 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
     @override
     void initState() {
         super.initState();
-        _phoneController.addListener(() => setState(() {}));
-        _pinController.addListener(() => setState(() {}));
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryBiometric());
     }
 
@@ -69,7 +67,35 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
         }
     }
 
+    void _onDigit(String d) {
+        if (_busy) return;
+        if (_digits.length >= 6) return;
+        setState(() {
+            _digits.add(d);
+            _error = null;
+        });
+        if (_digits.length == 6) {
+            _submitPin();
+        }
+    }
+
+    void _onDelete() {
+        if (_busy) return;
+        if (_digits.isEmpty) return;
+        setState(() => _digits.removeLast());
+    }
+
+    void _resetInput() {
+        setState(() => _digits.clear());
+    }
+
     Future<void> _submitPin() async {
+        final phone = ref.read(authControllerProvider).lastKnownPhoneNumber;
+        if (phone == null) {
+            // 안전망: 마지막 번호가 없으면 가입 흐름으로.
+            if (mounted) context.go('/auth/onboarding-consent');
+            return;
+        }
         setState(() {
             _busy = true;
             _error = null;
@@ -77,10 +103,9 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
         try {
             final repo = ref.read(authRepositoryProvider);
             final deviceId = await ref.read(deviceIdStoreProvider).getOrCreate();
-            final phone = _normalize(_phoneController.text.trim());
             final tokens = await repo.pinLogin(
                 phoneNumber: phone,
-                pin: _pinController.text,
+                pin: _digits.join(),
                 deviceId: deviceId,
             );
             final me = await repo.me(tokens.accessToken);
@@ -94,15 +119,19 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
         } on DioException catch (e) {
             _handleLoginError(e);
         } catch (_) {
+            HapticFeedback.heavyImpact();
             setState(() {
                 _error = '로그인에 실패했어요. 잠시 후 다시 시도해주세요.';
             });
+            _resetInput();
         } finally {
             if (mounted) setState(() => _busy = false);
         }
     }
 
     void _handleLoginError(DioException e) {
+        HapticFeedback.heavyImpact();
+        _resetInput();
         final res = e.response;
         if (res?.statusCode == 423) {
             final raw = res?.data;
@@ -126,8 +155,8 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
         }
         setState(() {
             _error = remaining == null
-                ? '휴대폰 번호 또는 PIN이 잘못되었어요.'
-                : '휴대폰 번호 또는 PIN이 잘못되었어요. (남은 시도 $remaining회)';
+                ? 'PIN이 일치하지 않아요.'
+                : 'PIN이 일치하지 않아요. (남은 시도 $remaining회)';
         });
         if (remaining != null && remaining <= 2 && mounted) {
             _showResetHint();
@@ -147,20 +176,6 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
                 setState(() {});
             }
         });
-    }
-
-    String _normalize(String raw) {
-        final digits = raw.replaceAll(RegExp(r'\D'), '');
-        if (digits.startsWith('010') && digits.length == 11) {
-            return '+82${digits.substring(1)}';
-        }
-        return '+82$digits';
-    }
-
-    bool get _canSubmit {
-        final phoneOk = _phoneController.text.replaceAll(RegExp(r'\D'), '').length >= 10;
-        final pinOk = _pinController.text.length == 6;
-        return phoneOk && pinOk && !_busy;
     }
 
     void _showResetHint() {
@@ -191,8 +206,6 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
     @override
     void dispose() {
         _lockTicker?.cancel();
-        _phoneController.dispose();
-        _pinController.dispose();
         super.dispose();
     }
 
@@ -200,49 +213,92 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
     Widget build(BuildContext context) {
         final lockedUntil = _lockedUntil;
         final locked = lockedUntil != null && lockedUntil.isAfter(DateTime.now());
+        final phone = ref.watch(authControllerProvider).lastKnownPhoneNumber;
+        final greetingTail = _maskedPhoneTail(phone);
         return Scaffold(
             backgroundColor: AppColors.bg,
-            resizeToAvoidBottomInset: true,
             body: SafeArea(
                 child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                            const SizedBox(height: 24),
-                            Container(
-                                width: 64,
-                                height: 64,
-                                decoration: BoxDecoration(
-                                    color: AppColors.peach,
-                                    borderRadius: BorderRadius.circular(18),
+                            const SizedBox(height: 28),
+                            Center(
+                                child: Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                        color: AppColors.peach,
+                                        borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Icon(Icons.checkroom,
+                                        size: 28, color: AppColors.peachInk),
                                 ),
-                                alignment: Alignment.center,
-                                child: const Icon(Icons.checkroom,
-                                    size: 30, color: AppColors.peachInk),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                                '다시 만나서 반가워요',
-                                style: AppTypography.headingMd800,
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                                '휴대폰 번호와 PIN을 입력해주세요',
-                                style: AppTypography.body500,
                             ),
                             const SizedBox(height: 28),
+                            Center(
+                                child: Text(
+                                    greetingTail != null
+                                        ? '$greetingTail님, 다시 오셨어요'
+                                        : '다시 만나서 반가워요',
+                                    style: AppTypography.headingMd800,
+                                ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Center(
+                                child: Text(
+                                    '6자리 비밀번호를 입력해주세요',
+                                    style: AppTypography.body500,
+                                ),
+                            ),
+                            const SizedBox(height: 36),
                             if (locked)
                                 _lockedBanner(lockedUntil)
-                            else
-                                ..._loginFields(),
+                            else ...[
+                                PinDots(length: _digits.length),
+                                if (_error != null) ...[
+                                    const SizedBox(height: 16),
+                                    Center(
+                                        child: Text(
+                                            _error!,
+                                            style: const TextStyle(
+                                                color: Color(0xFFB3261E),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                            ],
                             const Spacer(),
+                            if (!locked)
+                                NumPad(
+                                    onDigit: _onDigit,
+                                    onDelete: _onDelete,
+                                    onBio: _tryBiometric,
+                                ),
+                            const SizedBox(height: 12),
                             TextButton(
                                 onPressed: () => context.push('/auth/phone'),
                                 style: TextButton.styleFrom(
                                     foregroundColor: AppColors.ink2,
                                 ),
-                                child: const Text('처음이신가요? 가입하기'),
+                                child: const Text.rich(
+                                    TextSpan(
+                                        text: '처음이신가요? ',
+                                        children: [
+                                            TextSpan(
+                                                text: '가입하기',
+                                                style: TextStyle(
+                                                    color: AppColors.peachInk,
+                                                    fontWeight: FontWeight.w700,
+                                                ),
+                                            ),
+                                        ],
+                                    ),
+                                ),
                             ),
                             TextButton(
                                 onPressed: () => context.push('/auth/pin-reset'),
@@ -251,6 +307,7 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
                                 ),
                                 child: const Text('PIN을 잊으셨나요?'),
                             ),
+                            const SizedBox(height: 8),
                         ],
                     ),
                 ),
@@ -276,104 +333,24 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
                         ),
                     ),
                     const SizedBox(height: 8),
-                    Text('잠금 해제까지 $mm:$ss',
-                        style: const TextStyle(color: Color(0xFF9F2A1E))),
-                    const SizedBox(height: 12),
-                    PrimaryButton(
-                        label: 'SMS 재인증으로 PIN 재설정',
-                        onPressed: () => context.push('/auth/pin-reset'),
+                    Text(
+                        '$mm:$ss 후에 다시 시도하거나 SMS 재인증으로 PIN을 재설정하세요.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF9F2A1E),
+                        ),
                     ),
                 ],
             ),
         );
     }
-
-    List<Widget> _loginFields() {
-        return [
-            _LoginField(
-                controller: _phoneController,
-                hint: '010 1234 5678',
-                prefixText: '+82  ',
-                keyboardType: TextInputType.phone,
-                maxLength: 11,
-            ),
-            const SizedBox(height: 12),
-            _LoginField(
-                controller: _pinController,
-                hint: 'PIN 6자리',
-                keyboardType: TextInputType.number,
-                obscureText: true,
-                maxLength: 6,
-            ),
-            if (_error != null)
-                Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(_error!,
-                        style: const TextStyle(color: Color(0xFFB3261E))),
-                ),
-            const SizedBox(height: 20),
-            PrimaryButton(
-                label: '로그인',
-                busy: _busy,
-                onPressed: _canSubmit ? _submitPin : null,
-            ),
-        ];
-    }
 }
 
-class _LoginField extends StatelessWidget {
-    const _LoginField({
-        required this.controller,
-        required this.hint,
-        this.prefixText,
-        this.keyboardType,
-        this.obscureText = false,
-        this.maxLength,
-    });
-
-    final TextEditingController controller;
-    final String hint;
-    final String? prefixText;
-    final TextInputType? keyboardType;
-    final bool obscureText;
-    final int? maxLength;
-
-    @override
-    Widget build(BuildContext context) {
-        return Container(
-            decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: AppShadows.card,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: TextField(
-                controller: controller,
-                keyboardType: keyboardType,
-                obscureText: obscureText,
-                maxLength: maxLength,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                    letterSpacing: 0.4,
-                ),
-                inputFormatters: keyboardType == TextInputType.number ||
-                        keyboardType == TextInputType.phone
-                    ? [
-                          FilteringTextInputFormatter.digitsOnly,
-                          if (maxLength != null) LengthLimitingTextInputFormatter(maxLength!),
-                      ]
-                    : null,
-                decoration: InputDecoration(
-                    hintText: hint,
-                    prefixText: prefixText,
-                    border: InputBorder.none,
-                    isCollapsed: true,
-                    counterText: '',
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-            ),
-        );
-    }
+/// 휴대폰 번호의 마지막 4자리를 반환. mockup의 "지윤님" 자리에 임시 표시 용도.
+String? _maskedPhoneTail(String? phone) {
+    if (phone == null || phone.isEmpty) return null;
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 4) return null;
+    return digits.substring(digits.length - 4);
 }

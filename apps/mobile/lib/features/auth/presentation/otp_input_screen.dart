@@ -94,7 +94,7 @@ class _OtpInputScreenState extends ConsumerState<OtpInputScreen> {
             } else if (widget.purpose == 'PHONE_CHANGE') {
                 context.pop();
             } else {
-                context.push('/auth/onboarding-consent');
+                context.push('/auth/pin-setup');
             }
         } catch (_) {
             setState(() => _error = '인증번호가 일치하지 않거나 만료되었어요.');

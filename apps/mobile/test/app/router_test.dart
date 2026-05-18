@@ -8,7 +8,10 @@ import 'package:go_router/go_router.dart';
 import 'package:my_closet_mobile/app/router.dart';
 import 'package:my_closet_mobile/core/storage/secure_token_storage.dart';
 import 'package:my_closet_mobile/features/auth/data/auth_api.dart';
+import 'package:my_closet_mobile/features/auth/data/auth_prefs.dart';
 import 'package:my_closet_mobile/features/auth/data/auth_repository.dart';
+
+import '../helpers/memory_prefs.dart';
 
 class _MemoryStorage implements SecureTokenStorage {
     String? _access;
@@ -42,16 +45,19 @@ class _StubRepo implements AuthRepository {
     dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
-ProviderContainer _container({SecureTokenStorage? storage}) {
+ProviderContainer _container({SecureTokenStorage? storage, AuthPrefs? prefs}) {
     return ProviderContainer(
         overrides: [
             secureTokenStorageProvider.overrideWithValue(storage ?? _MemoryStorage()),
             authRepositoryProvider.overrideWithValue(_StubRepo()),
+            authPrefsProvider.overrideWithValue(prefs ?? MemoryPrefs()),
         ],
     );
 }
 
 Future<GoRouter> _pumpApp(WidgetTester tester, ProviderContainer container) async {
+    await tester.binding.setSurfaceSize(const Size(393, 852));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final router = container.read(routerProvider);
     await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -64,7 +70,7 @@ Future<GoRouter> _pumpApp(WidgetTester tester, ProviderContainer container) asyn
 }
 
 void main() {
-    testWidgets('비로그인 상태에서 보호 라우트는 /auth/pin-login으로 리다이렉트', (tester) async {
+    testWidgets('비로그인 상태에서 보호 라우트는 /auth/onboarding-consent로 리다이렉트', (tester) async {
         final c = _container();
         addTearDown(c.dispose);
         // 부팅 후 restore가 자동으로 signedOut으로 보낸다.
@@ -73,7 +79,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(
             router.routerDelegate.currentConfiguration.uri.toString(),
-            AppRoute.pinLogin.path,
+            AppRoute.onboardingConsent.path,
         );
     });
 

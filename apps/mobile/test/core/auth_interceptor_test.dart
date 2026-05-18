@@ -8,7 +8,10 @@ import 'package:my_closet_mobile/core/network/auth_interceptor.dart';
 import 'package:my_closet_mobile/core/storage/secure_token_storage.dart';
 import 'package:my_closet_mobile/features/auth/auth_state.dart';
 import 'package:my_closet_mobile/features/auth/data/auth_api.dart';
+import 'package:my_closet_mobile/features/auth/data/auth_prefs.dart';
 import 'package:my_closet_mobile/features/auth/data/auth_repository.dart';
+
+import '../helpers/memory_prefs.dart';
 
 class _StubAdapter implements HttpClientAdapter {
     _StubAdapter(this._responder);
@@ -91,6 +94,7 @@ ProviderContainer _container({
         overrides: [
             secureTokenStorageProvider.overrideWithValue(storage),
             authRepositoryProvider.overrideWithValue(repo),
+            authPrefsProvider.overrideWithValue(MemoryPrefs()),
         ],
     );
 }
@@ -99,7 +103,7 @@ Dio _buildDio(ProviderContainer container, _StubAdapter adapter) {
     final dio = Dio(BaseOptions(baseUrl: 'https://api.test'));
     dio.httpClientAdapter = adapter;
     final dioProbe = Provider<Dio>((ref) {
-        dio.interceptors.add(AuthInterceptor(ref, retryDioFactory: () => dio));
+        dio.interceptors.add(AuthInterceptor(retryDioFactory: () => dio));
         return dio;
     });
     container.read(dioProbe);

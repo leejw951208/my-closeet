@@ -7,7 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_closet_mobile/app/app.dart';
 import 'package:my_closet_mobile/core/storage/secure_token_storage.dart';
 import 'package:my_closet_mobile/features/auth/data/auth_api.dart';
+import 'package:my_closet_mobile/features/auth/data/auth_prefs.dart';
 import 'package:my_closet_mobile/features/auth/data/auth_repository.dart';
+
+import '../helpers/memory_prefs.dart';
 
 class _MemStorage implements SecureTokenStorage {
     String? _a;
@@ -49,6 +52,7 @@ void main() {
             overrides: [
                 secureTokenStorageProvider.overrideWithValue(storage),
                 authRepositoryProvider.overrideWithValue(_StubRepo()),
+                authPrefsProvider.overrideWithValue(MemoryPrefs()),
             ],
         );
         addTearDown(container.dispose);

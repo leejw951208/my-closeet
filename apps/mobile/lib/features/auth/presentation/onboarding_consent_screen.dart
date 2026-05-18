@@ -115,7 +115,7 @@ class OnboardingConsentScreen extends ConsumerWidget {
                             PrimaryButton(
                                 label: '시작하기',
                                 onPressed: flow.consented
-                                    ? () => context.push('/auth/pin-setup')
+                                    ? () => context.push('/auth/phone')
                                     : null,
                             ),
                             Padding(

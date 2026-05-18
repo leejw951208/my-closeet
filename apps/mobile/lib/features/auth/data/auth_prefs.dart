@@ -9,8 +9,16 @@ class AuthPrefs {
 
     static const _biometricKey = 'mc_biometric_enabled';
     static const _bannerKey = 'mc_stale_banner_dismissed_date';
+    static const _lastPhoneKey = 'mc_last_phone_number';
 
     final FlutterSecureStorage _storage;
+
+    Future<String?> readLastPhoneNumber() => _storage.read(key: _lastPhoneKey);
+
+    Future<void> writeLastPhoneNumber(String phoneNumber) =>
+        _storage.write(key: _lastPhoneKey, value: phoneNumber);
+
+    Future<void> clearLastPhoneNumber() => _storage.delete(key: _lastPhoneKey);
 
     Future<bool> isBiometricEnabled() async {
         return (await _storage.read(key: _biometricKey)) == '1';

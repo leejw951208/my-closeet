@@ -3,8 +3,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/network/auth_callbacks.dart';
 import '../../core/storage/secure_token_storage.dart';
 import 'data/auth_api.dart';
+import 'data/auth_prefs.dart';
 import 'data/auth_repository.dart';
 
 enum AuthStatus {
@@ -24,6 +26,7 @@ class AuthState {
         this.phoneNumber,
         this.accessToken,
         this.lastSignInAt,
+        this.lastKnownPhoneNumber,
     });
 
     final AuthStatus status;
@@ -31,6 +34,8 @@ class AuthState {
     final String? phoneNumber;
     final String? accessToken;
     final DateTime? lastSignInAt;
+    /// 마지막으로 로그인했던 휴대폰 번호(E.164). signedOut 상태에서도 유지되어 PIN 로그인 화면에서 사용한다.
+    final String? lastKnownPhoneNumber;
 
     static const AuthState unknown = AuthState(status: AuthStatus.unknown);
     static const AuthState signedOut = AuthState(status: AuthStatus.signedOut);
@@ -41,6 +46,7 @@ class AuthState {
         String? phoneNumber,
         String? accessToken,
         DateTime? lastSignInAt,
+        String? lastKnownPhoneNumber,
     }) {
         return AuthState(
             status: status ?? this.status,
@@ -48,6 +54,7 @@ class AuthState {
             phoneNumber: phoneNumber ?? this.phoneNumber,
             accessToken: accessToken ?? this.accessToken,
             lastSignInAt: lastSignInAt ?? this.lastSignInAt,
+            lastKnownPhoneNumber: lastKnownPhoneNumber ?? this.lastKnownPhoneNumber,
         );
     }
 }
@@ -56,17 +63,36 @@ class AuthController extends StateNotifier<AuthState> {
     AuthController({
         required AuthRepository repository,
         required SecureTokenStorage storage,
+        required AuthPrefs prefs,
     })  : _repository = repository,
           _storage = storage,
-          super(AuthState.unknown);
+          _prefs = prefs,
+          super(AuthState.unknown) {
+        authCallbacks.getAccessToken = () => state.accessToken;
+        authCallbacks.refreshAccessToken = refreshToken;
+        authCallbacks.onUnauthorized = () {
+            // ignore: discarded_futures
+            signOut();
+        };
+    }
+
+    @override
+    void dispose() {
+        authCallbacks.getAccessToken = null;
+        authCallbacks.refreshAccessToken = null;
+        authCallbacks.onUnauthorized = null;
+        super.dispose();
+    }
 
     final AuthRepository _repository;
     final SecureTokenStorage _storage;
+    final AuthPrefs _prefs;
 
     Future<void> restore() async {
+        final lastPhone = await _prefs.readLastPhoneNumber();
         final refresh = await _storage.readRefreshToken();
         if (refresh == null || refresh.isEmpty) {
-            state = AuthState.signedOut;
+            state = AuthState.signedOut.copyWith(lastKnownPhoneNumber: lastPhone);
             return;
         }
         try {
@@ -76,16 +102,18 @@ class AuthController extends StateNotifier<AuthState> {
                 refreshToken: pair.refreshToken,
             );
             final me = await _repository.me(pair.accessToken);
+            await _prefs.writeLastPhoneNumber(me.phoneNumber);
             state = AuthState(
                 status: AuthStatus.authenticated,
                 userId: me.id,
                 phoneNumber: me.phoneNumber,
                 accessToken: pair.accessToken,
                 lastSignInAt: me.lastSignInAt,
+                lastKnownPhoneNumber: me.phoneNumber,
             );
         } catch (_) {
             await _storage.clear();
-            state = AuthState.signedOut;
+            state = AuthState.signedOut.copyWith(lastKnownPhoneNumber: lastPhone);
         }
     }
 
@@ -99,12 +127,14 @@ class AuthController extends StateNotifier<AuthState> {
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
         );
+        await _prefs.writeLastPhoneNumber(phoneNumber);
         state = AuthState(
             status: AuthStatus.authenticated,
             userId: userId,
             phoneNumber: phoneNumber,
             accessToken: tokens.accessToken,
             lastSignInAt: lastSignInAt,
+            lastKnownPhoneNumber: phoneNumber,
         );
     }
 
@@ -116,7 +146,10 @@ class AuthController extends StateNotifier<AuthState> {
             } catch (_) {}
         }
         await _storage.clear();
-        state = AuthState.signedOut;
+        // lastKnownPhoneNumber 는 의도적으로 유지 — 다음 PIN 로그인 화면에서 사용.
+        state = AuthState.signedOut.copyWith(
+            lastKnownPhoneNumber: state.lastKnownPhoneNumber,
+        );
     }
 
     Future<String?> refreshToken() async {
@@ -143,5 +176,6 @@ final authControllerProvider =
         return AuthController(
             repository: ref.watch(authRepositoryProvider),
             storage: ref.watch(secureTokenStorageProvider),
+            prefs: ref.watch(authPrefsProvider),
         );
     });
