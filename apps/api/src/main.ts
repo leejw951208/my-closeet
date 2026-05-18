@@ -28,6 +28,9 @@ async function bootstrap(): Promise<void> {
     app.enableShutdownHooks()
 
     const config = app.get(AppConfigService)
+    if (config.nodeEnv !== "production") {
+        app.enableCors({ origin: true, credentials: true })
+    }
     await app.listen(config.port)
 }
 
