@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../shared/formatters/phone_number_formatter.dart';
 import '../../../shared/widgets/auth_back_button.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/soft_card.dart';
@@ -157,7 +158,7 @@ class _PinResetScreenState extends ConsumerState<PinResetScreen> {
                                     ),
                                     inputFormatters: [
                                         FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(11),
+                                        PhoneNumberFormatter(),
                                     ],
                                     decoration: const InputDecoration(
                                         hintText: '010 1234 5678',

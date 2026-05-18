@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../shared/formatters/phone_number_formatter.dart';
 import '../../../shared/widgets/auth_back_button.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/soft_card.dart';
@@ -232,7 +233,8 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
                     controller: controller,
                     enabled: enabled,
                     keyboardType: keyboardType,
-                    maxLength: maxLength,
+                    // phone일 때는 공백 포함 13자라 TextField.maxLength로 막으면 11자에서 잘림. formatter가 11자리 보장.
+                    maxLength: keyboardType == TextInputType.phone ? null : maxLength,
                     style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -241,7 +243,10 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
                     ),
                     inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
-                        if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+                        if (keyboardType == TextInputType.phone)
+                            PhoneNumberFormatter()
+                        else if (maxLength != null)
+                            LengthLimitingTextInputFormatter(maxLength),
                     ],
                     decoration: InputDecoration(
                         hintText: hint,
