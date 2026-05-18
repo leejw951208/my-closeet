@@ -1,0 +1,18 @@
+my-closets git:(main) pnpm --filter @my-closet/database exec prisma migrate dev --name item-register-api-p1
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-ap-northeast-2.pooler.supabase.com:5432"
+
+
+Error: 
+⚠️ We found changes that cannot be executed:
+
+  • Step 3 Added the required column `phoneNumber` to the `User` table without a default value. There are 1 rows in this table, it is not possible to execute this step.
+  • Step 3 Added the required column `pinHash` to the `User` table without a default value. There are 1 rows in this table, it is not possible to execute this step.
+
+You can use prisma migrate dev --create-only to create the migration file, and manually modify it to address the underlying issue(s).
+Then run prisma migrate dev to apply it and verify it works.
+
+/Users/leejinwoo/Desktop/study/my-closets/packages/database:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: prisma migrate dev --name item-register-api-p1

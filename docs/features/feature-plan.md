@@ -67,14 +67,14 @@
 
 ### Phase 1. 기반 (Week 1~3)
 
-| ID    | 작업                                                                    | 관련 US | Slug                 |
-| ----- | ----------------------------------------------------------------------- | ------- | -------------------- |
-| FE-01 | 디자인 시스템 (theme, color palette, typography, spacing)               | 인프라  | `mobile-foundation`  |
-| FE-02 | go_router 기반 라우팅 골격 (login·home·register·closet·outfit·calendar) | 인프라  | `mobile-foundation`  |
-| FE-03 | Riverpod 상태 관리 베이스 (auth provider·api client provider)           | 인프라  | `mobile-foundation`  |
-| FE-04 | API 클라이언트 (`Dio` + interceptor: JWT 헤더·토큰 갱신·에러 매핑)      | 인프라  | `mobile-foundation`  |
-| FE-05 | 분석 SDK (Amplitude/Mixpanel Flutter SDK) + 공통 이벤트 helper          | US-14   | `analytics-pipeline` |
-| FE-06 | Sentry Flutter 연동 (tech-stack 2.6에 따라 Crashlytics 비채택)          | 인프라  | `mobile-foundation`  |
+| ID    | 작업                                                                    | 관련 US | Slug                 | 비고                                            |
+| ----- | ----------------------------------------------------------------------- | ------- | -------------------- | ----------------------------------------------- |
+| FE-01 | 디자인 시스템 (theme, color palette, typography, spacing)               | 인프라  | `mobile-foundation`  | ✅ 완료 (2026-05-18)                            |
+| FE-02 | go_router 기반 라우팅 골격 (login·home·register·closet·outfit·calendar) | 인프라  | `mobile-foundation`  | ✅ 완료                                         |
+| FE-03 | Riverpod 상태 관리 베이스 (auth provider·api client provider)           | 인프라  | `mobile-foundation`  | ✅ 완료                                         |
+| FE-04 | API 클라이언트 (`Dio` + interceptor: JWT 헤더·토큰 갱신·에러 매핑)      | 인프라  | `mobile-foundation`  | ✅ 완료                                         |
+| FE-05 | 분석 SDK (Amplitude/Mixpanel Flutter SDK) + 공통 이벤트 helper          | US-14   | `analytics-pipeline` | 대기                                            |
+| FE-06 | Sentry Flutter 연동 (tech-stack 2.6에 따라 Crashlytics 비채택)          | 인프라  | `mobile-foundation`  | ✅ 완료 (운영자 DSN 주입 후 1회 수동 점검 잔여) |
 
 ### Phase 2. 등록 흐름 (Week 4~6)
 
@@ -115,7 +115,7 @@
 
 | ID     | 작업                                                                        | 비고                | Slug              |
 | ------ | --------------------------------------------------------------------------- | ------------------- | ----------------- |
-| INF-01 | GitHub Actions CI — pnpm 빌드/테스트, flutter analyze/test, prisma validate | 출시 -8주           | `ci-foundation`   |
+| INF-01 | GitHub Actions CI — pnpm 빌드/테스트, flutter analyze/test, prisma validate | **연기.** 기능·디자인 작업이 어느정도 완료된 뒤 착수 (2026-05-18 결정) | `ci-foundation`   |
 | INF-02 | Docker 이미지 빌드 + Fly.io / Render 배포 파이프라인                        | 출시 -4주           | `deploy-pipeline` |
 | INF-03 | 스테이징 환경 (DB·이미지 버킷)                                              | 출시 -4주           | `deploy-pipeline` |
 | INF-04 | 법무 자문 통과 + 14세 차단 플로우 점검                                      | Pre-mortem Tiger T5 | `launch-prep`     |
@@ -158,8 +158,8 @@ FE-01·02·03·04·05·06 ─────────────┴─▶ FE-07
 병렬로 다음 4개 slug를 동시에 진입.
 
 1. **`backend-foundation`** (BE-01·02·03·05) — ✅ 이미 완료. 추가로 Sentry·R2 실 구현은 후속 slug에서.
-2. **`mobile-foundation`** (FE-01~06) — 디자인 시스템·라우팅·Riverpod·API 클라이언트.
-3. **`ci-foundation`** (INF-01) — GitHub Actions 골격. 이후 모든 PR에 자동 적용.
+2. **`mobile-foundation`** (FE-01·02·03·04·06) — ✅ 완료. 디자인 시스템·라우팅·Riverpod·Dio·Sentry 결선까지 마침. FE-05(분석 SDK)는 `analytics-pipeline`으로 분리.
+3. ~~**`ci-foundation`** (INF-01)~~ — **연기.** 기능·디자인 슬러그가 어느정도 완료된 뒤 착수하기로 결정(2026-05-18). 그 전까지는 로컬 `pnpm` / `flutter` 명령으로 검증.
 4. **`auth-login`** (BE-06·07, FE-07) — ✅ 완료(보강 1라운드 포함). 운영 전에 솔라피 발신번호 등록 + Fly secrets(JWT_SECRET·SOLAPI_*) + `prisma migrate dev --name auth-hardening` 1회 실행 필요.
 
 이렇게 잡으면 Week 1 끝나는 시점에 "DB 마이그레이션 통과 + API 부팅 + 첫 화면 토큰 통과 + CI 그린"이 모두 보입니다.
@@ -173,11 +173,16 @@ feature-\_ 스킬은 slug 단위로 동작한다. 각 slug별 구성 작업·관
 | Slug                 | 포함 작업                                              | 관련 US             | Tiger 게이트 | 상태         |
 | -------------------- | ------------------------------------------------------ | ------------------- | ------------ | ------------ |
 | `backend-foundation` | BE-01, BE-02, BE-03, BE-05                             | 인프라              | —            | ✅ 완료      |
-| `mobile-foundation`  | FE-01, FE-02, FE-03, FE-04, FE-06                      | 인프라              | —            | 대기         |
-| `ci-foundation`      | INF-01                                                 | 인프라              | —            | 대기         |
+| `mobile-foundation`  | FE-01, FE-02, FE-03, FE-04, FE-06                      | 인프라              | —            | ✅ 완료 (검증 통과, Sentry DSN 주입 후 1회 수동 점검만 잔여) |
+| `ci-foundation`      | INF-01                                                 | 인프라              | —            | 연기 (기능·디자인 어느정도 완료 후 착수) |
 | `analytics-pipeline` | BE-04, FE-05, BE-22                                    | US-14               | —            | BE-04만 완료 |
 | `auth-login`         | BE-06, BE-07, FE-07 (SMS+PIN+생체)                     | US-01               | —            | ✅ 보강 1라운드 완료 (잔여 OPEN 7건) |
-| `item-register`      | BE-08, BE-09, BE-10, BE-11, FE-08, FE-09, FE-10, FE-11 | US-02, US-03, US-04 | T1·T4        | 대기         |
+| `auth-onboarding-ui` | (FE-07 화면 디자인 폴리시 — mockup 적용)                | US-01               | —            | 대기 (mockup 기반)                   |
+| ~~`item-register`~~  | — (스코프 너무 커서 4개로 분할, 2026-05-18)            | US-02, US-03, US-04 | T1·T4        | 분할 (아카이브 예정. `_archive_item-register-original/`) |
+| `item-register-api`  | BE-08, BE-09 (백엔드 단건·일괄 API)                    | US-02, US-03        | —            | ✅ 완료 (verified)         |
+| `item-register-ai`   | BE-10, BE-11 (분류 μsvc + PATCH 카테고리)              | US-04               | T1           | 대기 (T001 모델 선정 ESCALATE) |
+| `item-register-mobile` | FE-08, FE-09, FE-10, FE-11 (Flutter 등록·수정 UI)    | US-02, US-03, US-04 | T4           | 대기         |
+| `item-register-gates` | (게이트 측정·증명·보고서)                              | US-02·03·04         | T1·T4·NFR    | 대기         |
 | `closet-browse`      | BE-12, BE-13, FE-12, FE-13, FE-14                      | US-06, US-07        | —            | 대기         |
 | `outfit-coordinate`  | BE-14, BE-15, FE-15, FE-16                             | US-08, US-09        | T3           | 대기         |
 | `calendar-wear`      | BE-16, FE-17, FE-18                                    | US-10               | —            | 대기         |
@@ -190,6 +195,65 @@ feature-\_ 스킬은 slug 단위로 동작한다. 각 slug별 구성 작업·관
 | `launch-prep`        | INF-04, INF-05, FE-24                                  | GTM Pre-launch      | T5           | 대기         |
 
 > 메모. `analytics-pipeline`과 `metrics-dashboard`는 BE-22가 양쪽에 포함되도록 표기되어 있다. 실 구현 시 `analytics-pipeline`에서 BE-22 쿼리를 한 번 정의하면 `metrics-dashboard`는 시각화 layer만 다루도록 정리한다.
+
+---
+
+## 8. 구현 우선순위 (2026-05-18)
+
+> **전략.** 외부 의존이 필요한 기능은 mock으로 깔고 흐름부터 잇는다. 실 서비스 결선은 출시 직전 집중 처리. 핵심 가치 루프(등록 → 옷장 → 코디 → 캘린더)를 mock 상태로라도 먼저 완주시키는 것이 목적.
+
+### Group 1. 즉시 진입 (외부 의존 0, 핵심 가치 경로)
+
+| 순위 | Slug                    | 작업                | 비고                                                                  |
+| ---- | ----------------------- | ------------------- | --------------------------------------------------------------------- |
+| 1    | `auth-onboarding-ui`    | FE-07 폴리시         | mockup(`docs/plan/design/mockup/project/src/screens-onboarding.jsx`) 기반 디자인 적용. 기능은 이미 완료, 비주얼만. |
+| 2    | `item-register-mobile`  | FE-08·09·10·11      | API verified. NullClassifier로 분류 mock, 흐름 검증 가능.             |
+| 3    | `closet-browse`         | BE-12·13 + FE-12·13·14 | 등록한 옷이 보여야 의미.                                              |
+| 4    | `outfit-coordinate`     | BE-14·15 + FE-15·16 | 마네킹 4슬롯·셔플. Aha 모먼트(T3).                                    |
+| 5    | `calendar-wear`         | BE-16 + FE-17·18    | 캘린더·오늘 입기.                                                     |
+
+> **UI 슬러그 패턴.** `<영역>-ui` suffix(예. `auth-onboarding-ui`)는 해당 영역 기능 슬러그(`auth-login`)의 화면을 `docs/plan/design/mockup/` HTML/JSX 시안에 맞춰 Flutter에 옮기는 폴리시 작업. 다른 영역(item-register·closet·outfit 등)도 같은 패턴으로 후속 ui 슬러그를 둘 수 있음.
+
+> Group 1까지 끝나면 사용자가 **등록 → 옷장 보기 → 코디 → 기록**의 핵심 루프 전체를 mock 분류 상태로 완주 가능.
+
+### Group 2. Mock으로 깔고 흐름 잇기
+
+| 순위 | Slug                           | mock 전략                                       | real 교체 시점     |
+| ---- | ------------------------------ | ----------------------------------------------- | ------------------ |
+| 5    | `item-register-ai` (PATCH만)   | T014 PATCH 카테고리는 외부 의존 0. 먼저 구현.   | —                  |
+| 6    | `ootd-share`                   | 이미지 합성·시스템 공유 시트. mock 불필요.       | 바로 real          |
+| 7    | `cloud-sync`                   | BE-19 KMS는 app-level AES로 mock. 나머지 real. | KMS 교체 출시 직전 |
+| 8    | `data-export`                  | 외부 의존 0. Rollback 자산.                      | —                  |
+| 9    | `feature-flags`                | 환경변수 기반 단순 모듈.                          | LaunchDarkly 불필요 |
+
+### Group 3. 측정·집계 (다른 슬러그 어느 정도 완성된 뒤)
+
+| 순위 | Slug                       | 비고                                |
+| ---- | -------------------------- | ----------------------------------- |
+| 10   | `metrics-dashboard`        | KPI 9종 쿼리. 데이터가 쌓여야 의미. |
+| 11   | `item-register-gates`      | T1·T4·NFR. AI real 교체와 묶음.     |
+
+### Group 4. 외부 의존 real 교체 (출시 직전)
+
+| 순위 | 항목                                       | 트리거                                                     |
+| ---- | ------------------------------------------ | ---------------------------------------------------------- |
+| 12   | `analytics-pipeline` FE-05 + 실 SDK         | console sink → Amplitude/Mixpanel. 출시 D-2주.             |
+| 13   | `item-register-ai` 실 모델 (T008·T009·T010) | ⚠️ ESCALATE. MediaPipe vs CLIP vs 자체 학습.                |
+| 14   | `cloud-sync` BE-19 실 KMS                   | AWS KMS·Supabase Vault 등 선택.                            |
+| 15   | `deploy-pipeline` INF-02·03                 | Fly.io 또는 Render. 스테이징 먼저.                          |
+| 16   | `launch-prep` INF-04·05 + FE-24             | 법무·앱스토어·스크린샷·영상.                                |
+| 17   | `ci-foundation` INF-01                      | 기능·디자인 완료 후. **맨 마지막** (2026-05-18 결정).        |
+
+### Mock 인벤토리
+
+현재 동작 중인 mock·임시 구현은 real 교체 전에 모두 추적한다.
+
+| 위치                                                    | Mock 내용                                  | 실 교체 시 슬러그           |
+| ------------------------------------------------------- | ------------------------------------------ | --------------------------- |
+| `apps/api/src/items/classifier.service.ts NullClassifier` | 모든 옷을 category=null로 응답              | `item-register-ai` Group 4  |
+| `apps/api/src/analytics/console-analytics.sink.ts`        | 이벤트를 콘솔에 출력                        | `analytics-pipeline` Group 4 |
+| `apps/api/src/storage/local-storage.provider.ts`          | 사전서명·headObject·publicUrl 단순 구현      | R2/S3 (`cloud-sync` 또는 `deploy-pipeline` 시점) |
+| `apps/api/src/sms/solapi.service.ts` SMS_DEV_MODE         | OTP를 콘솔에 출력                           | 운영 솔라피 발신번호 등록 시점 |
 
 ### 사용 예시
 
