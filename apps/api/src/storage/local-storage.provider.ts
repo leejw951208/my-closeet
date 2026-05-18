@@ -3,7 +3,13 @@
 
 import { Injectable } from "@nestjs/common"
 import { randomUUID } from "node:crypto"
-import type { PresignedUploadUrl, StorageProvider } from "./storage.types"
+import type {
+    ObjectMetadata,
+    PresignedUploadUrl,
+    StorageProvider,
+} from "./storage.types"
+
+const PRESIGN_TTL_SECONDS = 3600
 
 @Injectable()
 export class LocalStorageProvider implements StorageProvider {
@@ -18,9 +24,19 @@ export class LocalStorageProvider implements StorageProvider {
         return {
             objectKey: params.objectKey,
             uploadUrl: `${this.baseUrl}/${params.objectKey}?token=${token}`,
-            publicUrl: `${this.baseUrl}/${params.objectKey}`,
-            expiresInSeconds: 900,
+            publicUrl: this.publicUrl(params.objectKey),
+            expiresInSeconds: PRESIGN_TTL_SECONDS,
         }
+    }
+
+    publicUrl(objectKey: string): string {
+        return `${this.baseUrl}/${objectKey}`
+    }
+
+    async headObject(_objectKey: string): Promise<ObjectMetadata | null> {
+        // 로컬 dev에서는 실제 업로드 검증을 생략하고 항상 존재한다고 가정한다.
+        // S3/R2 구현에서는 SDK의 HeadObject로 실제 size·contentType을 조회한다.
+        return { size: 0, contentType: null }
     }
 
     async delete(_objectKey: string): Promise<void> {

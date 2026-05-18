@@ -7,11 +7,18 @@ export interface PresignedUploadUrl {
     expiresInSeconds: number
 }
 
+export interface ObjectMetadata {
+    size: number
+    contentType: string | null
+}
+
 export interface StorageProvider {
     createPresignedUpload(params: {
         objectKey: string
         contentType: string
     }): Promise<PresignedUploadUrl>
+    publicUrl(objectKey: string): string
+    headObject(objectKey: string): Promise<ObjectMetadata | null>
     delete(objectKey: string): Promise<void>
 }
 

@@ -15,7 +15,8 @@ model Item {
   closetId     String       @db.Uuid
   closet       Closet       @relation(fields: [closetId], references: [id], onDelete: Cascade)
   photoUrl     String
-  category     ItemCategory
+  // AI 분류 신뢰도 미달·타임아웃 시 null. spec.md F3 참조.
+  category     ItemCategory?
   emoji        String?
   colorHex     String?
   brand        String?
@@ -27,6 +28,51 @@ model Item {
   outfitItems OutfitItem[]
 
   @@index([closetId, category])
+}
+
+// 일괄 등록 한 묶음. 사용자당 동시 1개 활성, idempotency-key로 멱등성 보장.
+model ItemBatch {
+  id              String           @id @default(uuid(7)) @db.Uuid
+  userId          String           @db.Uuid
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idempotencyKey  String?
+  total           Int
+  completed       Int              @default(0)
+  failed          Int              @default(0)
+  status          ItemBatchStatus  @default(PENDING)
+  createdAt       DateTime         @default(now())
+  completedAt     DateTime?
+
+  items ItemBatchItem[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, status])
+}
+
+model ItemBatchItem {
+  id        String              @id @default(uuid(7)) @db.Uuid
+  batchId   String              @db.Uuid
+  batch     ItemBatch           @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  objectKey String
+  status    ItemBatchItemStatus @default(PENDING)
+  itemId    String?             @db.Uuid
+  error     String?
+  updatedAt DateTime            @updatedAt
+
+  @@index([batchId, status])
+}
+
+enum ItemBatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ItemBatchItemStatus {
+  PENDING
+  COMPLETED
+  FAILED
 }
 
 enum ItemCategory {

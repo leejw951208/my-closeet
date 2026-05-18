@@ -17,4 +17,5 @@ model User {
   refreshTokens  RefreshToken[]
   phoneChanges   PhoneChangeLog[]
   pinResets      PinResetLog[]
+  itemBatches    ItemBatch[]
 }

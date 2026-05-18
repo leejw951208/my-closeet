@@ -9,6 +9,7 @@ import { LoggingModule } from "./common/logging/logging.module"
 import { StorageModule } from "./storage/storage.module"
 import { AnalyticsModule } from "./analytics/analytics.module"
 import { AuthModule } from "./auth/auth.module"
+import { ItemsModule } from "./items/items.module"
 import { SmsModule } from "./sms/sms.module"
 import { AppController } from "./app.controller"
 import { AppService } from "./app.service"
@@ -22,6 +23,7 @@ import { AppService } from "./app.service"
         AnalyticsModule,
         SmsModule,
         AuthModule,
+        ItemsModule,
         ThrottlerModule.forRoot([
             { name: "default", ttl: 60_000, limit: 60 },
             { name: "otp-send", ttl: 60_000, limit: 5 },
