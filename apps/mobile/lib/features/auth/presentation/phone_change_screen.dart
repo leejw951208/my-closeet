@@ -5,6 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/auth_back_button.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/soft_card.dart';
 import '../auth_state.dart';
 import '../data/auth_repository.dart';
 
@@ -60,119 +66,190 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
         final repo = ref.read(authRepositoryProvider);
         final auth = ref.watch(authControllerProvider);
         return Scaffold(
-            appBar: AppBar(title: const Text('휴대폰 번호 변경')),
+            backgroundColor: AppColors.bg,
+            resizeToAvoidBottomInset: true,
             body: SafeArea(
-                child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: SingleChildScrollView(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                                Text('현재 번호. ${auth.phoneNumber ?? "-"}'),
-                                const SizedBox(height: 12),
-                                ElevatedButton(
-                                    onPressed: _busy
-                                        ? null
-                                        : () => _run(() async {
-                                              final r = await repo.sendOtp(
-                                                  auth.phoneNumber!, 'PHONE_CHANGE');
-                                              setState(() {
-                                                  _currentRequestId = r.requestId;
-                                              });
-                                          }),
-                                    child: const Text('1) 현재 번호로 인증번호 발송'),
-                                ),
-                                const SizedBox(height: 8),
-                                TextField(
-                                    controller: _currentCodeCtl,
-                                    enabled: _currentRequestId != null,
-                                    keyboardType: TextInputType.number,
-                                    maxLength: 6,
-                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                    decoration: const InputDecoration(
-                                        labelText: '현재 번호 인증번호',
-                                        border: OutlineInputBorder(),
+                child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                            Row(
+                                children: [
+                                    AuthBackButton(
+                                        onTap: context.canPop() ? () => context.pop() : null,
                                     ),
-                                ),
-                                ElevatedButton(
-                                    onPressed: _currentRequestId == null || _busy
-                                        ? null
-                                        : () => _run(() async {
-                                              final v = await repo.verifyOtp(
-                                                  requestId: _currentRequestId!,
-                                                  code: _currentCodeCtl.text,
-                                                  purpose: 'PHONE_CHANGE');
-                                              setState(() {
-                                                  _currentSession = v.otpSessionToken;
-                                              });
-                                          }),
-                                    child: const Text('2) 현재 번호 인증 확인'),
-                                ),
-                                const Divider(height: 32),
-                                TextField(
-                                    controller: _newPhoneCtl,
-                                    enabled: _currentSession != null,
-                                    keyboardType: TextInputType.phone,
-                                    inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(11),
+                                    const Spacer(),
+                                    const Text(
+                                        '휴대폰 번호 변경',
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.ink,
+                                        ),
+                                    ),
+                                    const Spacer(),
+                                    const SizedBox(width: 40),
+                                ],
+                            ),
+                            const SizedBox(height: 12),
+                            SoftCard(
+                                color: AppColors.blue,
+                                child: Row(
+                                    children: [
+                                        const Icon(Icons.info_outline,
+                                            size: 16, color: AppColors.blueInk),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                            child: Text(
+                                                '휴대폰 번호 변경은 30일에 1회만 가능해요',
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.blueInk,
+                                                ),
+                                            ),
+                                        ),
                                     ],
-                                    decoration: const InputDecoration(
-                                        labelText: '새 번호 (010...)',
-                                        prefixText: '+82 ',
-                                        border: OutlineInputBorder(),
-                                    ),
                                 ),
-                                ElevatedButton(
-                                    onPressed: _currentSession == null || _busy
-                                        ? null
-                                        : () => _run(() async {
-                                              final phone = _normalize(_newPhoneCtl.text.trim());
-                                              final r = await repo.sendOtp(phone, 'PHONE_CHANGE');
-                                              setState(() {
-                                                  _newRequestId = r.requestId;
-                                              });
-                                          }),
-                                    child: const Text('3) 새 번호로 인증번호 발송'),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                                '현재 번호. ${auth.phoneNumber ?? "-"}',
+                                style: AppTypography.body500,
+                            ),
+                            const SizedBox(height: 12),
+                            PrimaryButton(
+                                label: '1) 현재 번호로 인증번호 발송',
+                                onPressed: _busy
+                                    ? null
+                                    : () => _run(() async {
+                                          final r = await repo.sendOtp(
+                                              auth.phoneNumber!, 'PHONE_CHANGE');
+                                          setState(() => _currentRequestId = r.requestId);
+                                      }),
+                            ),
+                            const SizedBox(height: 12),
+                            _phoneField(
+                                controller: _currentCodeCtl,
+                                hint: '현재 번호 인증번호 (6자리)',
+                                enabled: _currentRequestId != null,
+                                keyboardType: TextInputType.number,
+                                maxLength: 6,
+                            ),
+                            const SizedBox(height: 12),
+                            PrimaryButton(
+                                label: '2) 현재 번호 인증 확인',
+                                onPressed: _currentRequestId == null || _busy
+                                    ? null
+                                    : () => _run(() async {
+                                          final v = await repo.verifyOtp(
+                                              requestId: _currentRequestId!,
+                                              code: _currentCodeCtl.text,
+                                              purpose: 'PHONE_CHANGE');
+                                          setState(() => _currentSession = v.otpSessionToken);
+                                      }),
+                            ),
+                            const Divider(height: 32, color: AppColors.line),
+                            _phoneField(
+                                controller: _newPhoneCtl,
+                                hint: '새 번호 (010-XXXX-XXXX)',
+                                prefixText: '+82  ',
+                                enabled: _currentSession != null,
+                                keyboardType: TextInputType.phone,
+                                maxLength: 11,
+                            ),
+                            const SizedBox(height: 12),
+                            PrimaryButton(
+                                label: '3) 새 번호로 인증번호 발송',
+                                onPressed: _currentSession == null || _busy
+                                    ? null
+                                    : () => _run(() async {
+                                          final phone = _normalize(_newPhoneCtl.text.trim());
+                                          final r = await repo.sendOtp(phone, 'PHONE_CHANGE');
+                                          setState(() => _newRequestId = r.requestId);
+                                      }),
+                            ),
+                            const SizedBox(height: 12),
+                            _phoneField(
+                                controller: _newCodeCtl,
+                                hint: '새 번호 인증번호 (6자리)',
+                                enabled: _newRequestId != null,
+                                keyboardType: TextInputType.number,
+                                maxLength: 6,
+                            ),
+                            const SizedBox(height: 12),
+                            PrimaryButton(
+                                label: '4) 번호 변경 완료',
+                                onPressed: _newRequestId == null || _busy
+                                    ? null
+                                    : () => _run(() async {
+                                          final v = await repo.verifyOtp(
+                                              requestId: _newRequestId!,
+                                              code: _newCodeCtl.text,
+                                              purpose: 'PHONE_CHANGE');
+                                          await repo.changePhone(
+                                              currentOtpSessionToken: _currentSession!,
+                                              newOtpSessionToken: v.otpSessionToken);
+                                          await ref
+                                              .read(authControllerProvider.notifier)
+                                              .signOut();
+                                          if (context.mounted) context.go('/auth/phone');
+                                      }),
+                            ),
+                            if (_error != null)
+                                Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Text(_error!,
+                                        style: const TextStyle(color: Color(0xFFB3261E))),
                                 ),
-                                const SizedBox(height: 8),
-                                TextField(
-                                    controller: _newCodeCtl,
-                                    enabled: _newRequestId != null,
-                                    keyboardType: TextInputType.number,
-                                    maxLength: 6,
-                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                    decoration: const InputDecoration(
-                                        labelText: '새 번호 인증번호',
-                                        border: OutlineInputBorder(),
-                                    ),
-                                ),
-                                ElevatedButton(
-                                    onPressed: _newRequestId == null || _busy
-                                        ? null
-                                        : () => _run(() async {
-                                              final v = await repo.verifyOtp(
-                                                  requestId: _newRequestId!,
-                                                  code: _newCodeCtl.text,
-                                                  purpose: 'PHONE_CHANGE');
-                                              await repo.changePhone(
-                                                  currentOtpSessionToken: _currentSession!,
-                                                  newOtpSessionToken: v.otpSessionToken);
-                                              // 전체 refresh token 무효화로 인해 재로그인.
-                                              await ref
-                                                  .read(authControllerProvider.notifier)
-                                                  .signOut();
-                                              if (mounted) context.go('/auth/phone');
-                                          }),
-                                    child: const Text('4) 번호 변경 완료'),
-                                ),
-                                if (_error != null)
-                                    Padding(
-                                        padding: const EdgeInsets.only(top: 12),
-                                        child: Text(_error!, style: const TextStyle(color: Colors.red)),
-                                    ),
-                            ],
-                        ),
+                            const SizedBox(height: 24),
+                        ],
+                    ),
+                ),
+            ),
+        );
+    }
+
+    Widget _phoneField({
+        required TextEditingController controller,
+        required String hint,
+        String? prefixText,
+        bool enabled = true,
+        TextInputType? keyboardType,
+        int? maxLength,
+    }) {
+        return Opacity(
+            opacity: enabled ? 1 : 0.5,
+            child: Container(
+                decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppShadows.card,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: TextField(
+                    controller: controller,
+                    enabled: enabled,
+                    keyboardType: keyboardType,
+                    maxLength: maxLength,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                        letterSpacing: 0.4,
+                    ),
+                    inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+                    ],
+                    decoration: InputDecoration(
+                        hintText: hint,
+                        prefixText: prefixText,
+                        border: InputBorder.none,
+                        isCollapsed: true,
+                        counterText: '',
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                 ),
             ),

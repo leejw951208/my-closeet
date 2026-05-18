@@ -9,6 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/soft_card.dart';
 import '../auth_state.dart';
 import '../data/auth_prefs.dart';
 import '../data/auth_repository.dart';
@@ -33,6 +38,8 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
     @override
     void initState() {
         super.initState();
+        _phoneController.addListener(() => setState(() {}));
+        _pinController.addListener(() => setState(() {}));
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryBiometric());
     }
 
@@ -150,6 +157,12 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
         return '+82$digits';
     }
 
+    bool get _canSubmit {
+        final phoneOk = _phoneController.text.replaceAll(RegExp(r'\D'), '').length >= 10;
+        final pinOk = _pinController.text.length == 6;
+        return phoneOk && pinOk && !_busy;
+    }
+
     void _showResetHint() {
         showDialog<void>(
             context: context,
@@ -188,23 +201,54 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
         final lockedUntil = _lockedUntil;
         final locked = lockedUntil != null && lockedUntil.isAfter(DateTime.now());
         return Scaffold(
-            appBar: AppBar(title: const Text('로그인')),
+            backgroundColor: AppColors.bg,
+            resizeToAvoidBottomInset: true,
             body: SafeArea(
                 child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                            const SizedBox(height: 24),
+                            Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                    color: AppColors.peach,
+                                    borderRadius: BorderRadius.circular(18),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Icon(Icons.checkroom,
+                                    size: 30, color: AppColors.peachInk),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                                '다시 만나서 반가워요',
+                                style: AppTypography.headingMd800,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                                '휴대폰 번호와 PIN을 입력해주세요',
+                                style: AppTypography.body500,
+                            ),
+                            const SizedBox(height: 28),
                             if (locked)
                                 _lockedBanner(lockedUntil)
                             else
                                 ..._loginFields(),
+                            const Spacer(),
                             TextButton(
                                 onPressed: () => context.push('/auth/phone'),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.ink2,
+                                ),
                                 child: const Text('처음이신가요? 가입하기'),
                             ),
                             TextButton(
                                 onPressed: () => context.push('/auth/pin-reset'),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.peachInk,
+                                ),
                                 child: const Text('PIN을 잊으셨나요?'),
                             ),
                         ],
@@ -218,25 +262,26 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
         final remain = until.difference(DateTime.now());
         final mm = remain.inMinutes.remainder(60).toString().padLeft(2, '0');
         final ss = remain.inSeconds.remainder(60).toString().padLeft(2, '0');
-        return Container(
+        return SoftCard(
+            color: const Color(0xFFFCE7E5),
             padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-            ),
             child: Column(
                 children: [
                     const Text(
                         'PIN 잠금',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF9F2A1E),
+                        ),
                     ),
                     const SizedBox(height: 8),
-                    Text('잠금 해제까지 $mm:$ss'),
+                    Text('잠금 해제까지 $mm:$ss',
+                        style: const TextStyle(color: Color(0xFF9F2A1E))),
                     const SizedBox(height: 12),
-                    FilledButton(
+                    PrimaryButton(
+                        label: 'SMS 재인증으로 PIN 재설정',
                         onPressed: () => context.push('/auth/pin-reset'),
-                        child: const Text('SMS 재인증으로 PIN 재설정'),
                     ),
                 ],
             ),
@@ -245,48 +290,90 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
 
     List<Widget> _loginFields() {
         return [
-            TextField(
+            _LoginField(
                 controller: _phoneController,
+                hint: '010 1234 5678',
+                prefixText: '+82  ',
                 keyboardType: TextInputType.phone,
-                inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(11),
-                ],
-                decoration: const InputDecoration(
-                    labelText: '휴대폰 번호',
-                    prefixText: '+82 ',
-                    border: OutlineInputBorder(),
-                ),
+                maxLength: 11,
             ),
             const SizedBox(height: 12),
-            TextField(
+            _LoginField(
                 controller: _pinController,
+                hint: 'PIN 6자리',
                 keyboardType: TextInputType.number,
                 obscureText: true,
                 maxLength: 6,
-                inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                ],
-                decoration: const InputDecoration(
-                    labelText: 'PIN 6자리',
-                    border: OutlineInputBorder(),
-                ),
             ),
             if (_error != null)
                 Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(_error!,
+                        style: const TextStyle(color: Color(0xFFB3261E))),
                 ),
-            ElevatedButton(
-                onPressed: _busy ? null : _submitPin,
-                child: _busy
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                    : const Text('로그인'),
+            const SizedBox(height: 20),
+            PrimaryButton(
+                label: '로그인',
+                busy: _busy,
+                onPressed: _canSubmit ? _submitPin : null,
             ),
         ];
+    }
+}
+
+class _LoginField extends StatelessWidget {
+    const _LoginField({
+        required this.controller,
+        required this.hint,
+        this.prefixText,
+        this.keyboardType,
+        this.obscureText = false,
+        this.maxLength,
+    });
+
+    final TextEditingController controller;
+    final String hint;
+    final String? prefixText;
+    final TextInputType? keyboardType;
+    final bool obscureText;
+    final int? maxLength;
+
+    @override
+    Widget build(BuildContext context) {
+        return Container(
+            decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: AppShadows.card,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: TextField(
+                controller: controller,
+                keyboardType: keyboardType,
+                obscureText: obscureText,
+                maxLength: maxLength,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                    letterSpacing: 0.4,
+                ),
+                inputFormatters: keyboardType == TextInputType.number ||
+                        keyboardType == TextInputType.phone
+                    ? [
+                          FilteringTextInputFormatter.digitsOnly,
+                          if (maxLength != null) LengthLimitingTextInputFormatter(maxLength!),
+                      ]
+                    : null,
+                decoration: InputDecoration(
+                    hintText: hint,
+                    prefixText: prefixText,
+                    border: InputBorder.none,
+                    isCollapsed: true,
+                    counterText: '',
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+            ),
+        );
     }
 }

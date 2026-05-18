@@ -1,4 +1,4 @@
-// 라이트/다크 ThemeData 조립 진입점.
+// 라이트/다크 ThemeData 조립 진입점 + 공용 그림자 토큰.
 
 import 'package:flutter/material.dart';
 
@@ -25,4 +25,24 @@ class AppTheme {
             ),
         );
     }
+}
+
+class AppShadows {
+    AppShadows._();
+
+    static const List<BoxShadow> card = [
+        BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+        ),
+    ];
+
+    static const List<BoxShadow> elevate = [
+        BoxShadow(
+            color: Color(0x1F000000),
+            blurRadius: 24,
+            offset: Offset(0, 10),
+        ),
+    ];
 }
