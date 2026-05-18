@@ -13,7 +13,7 @@
 - 12개 P0 스토리. US-01·02·03·04·06·07·08·09·10·12·13·14.
 - 총 작업 51개는 1인 풀스택 기준으로 빠듯. Pre-mortem Elephant E2(팀 사이즈 vs 일정 현실성)를 매주 점검할 것.
 - **Slug 운영.** feature-\_ 스킬(`/feature-plan <slug>`, `/feature-implement <slug>` 등)이 `docs/features/<slug>/` 폴더 단위로 spec·plan·progress·review를 관리한다. 한 slug에 BE/FE 작업이 모두 포함되도록 수직 슬라이스로 묶었다.
-- **인증 전략.** Supabase Auth로 OAuth·JWT 발급을 위임. NestJS는 Supabase가 발급한 JWT를 검증해 user_id만 추출한다(자체 OAuth·세션 관리 없음). Supabase Auth가 50k MAU 무료 한도를 넘거나 커스텀 세션 요구가 생기면 그 시점에 자체 Auth로 이관 평가.
+- **인증 전략 (2026-05-18 갱신).** Supabase Auth + OAuth(카카오·애플·이메일) 방안을 폐기하고 **휴대폰 SMS OTP + PIN 6자리 + 생체인식** 자체 인증으로 전환. 이유: OAuth 콘솔 셋업·딥링크·매 로그인 외부 브라우저 왕복이 1인용 앱에 과한 마찰이고, 솔라피 SMS(건당 8원, Twilio 대비 8배 저렴)로 운영비를 잡았다. Supabase는 Postgres만 유지. 자세한 의사결정·정책은 [auth-login/spec.md](auth-login/spec.md) 참조. **본 슬러그는 보강 1라운드 완료 상태(2026-05-18).** Sentry PII filter·실기기 e2e·prisma migrate CI 게이트가 잔여.
 
 ---
 
@@ -33,8 +33,8 @@
 
 | ID    | 작업                                                                        | 관련 US | Slug            |
 | ----- | --------------------------------------------------------------------------- | ------- | --------------- |
-| BE-06 | Supabase Auth JWT 검증 미들웨어 + Guard (카카오 OAuth provider 등록 포함)   | US-01   | `auth-login`    |
-| BE-07 | Supabase 사용자 메타데이터 ↔ 도메인 User·Closet 동기화 (webhook 또는 lazy)  | US-01   | `auth-login`    |
+| BE-06 | 자체 OTP 발송·검증 + JWT 발급·회전 (솔라피 SMS·HMAC OTP·refresh lookupKey) | US-01   | `auth-login` — ✅ 구현+보강 1라운드 완료 |
+| BE-07 | User/Closet 트랜잭션 생성 + PIN bcrypt·잠금·재설정·번호 변경 흐름           | US-01   | `auth-login` — ✅ 완료 |
 | BE-08 | `POST /items` — 단건 옷 등록 (사전서명 URL → 클라이언트 업로드 → 메타 저장) | US-02   | `item-register` |
 | BE-09 | `POST /items/batch` — 멀티 업로드 큐 + 진행률 폴링 엔드포인트               | US-03   | `item-register` |
 | BE-10 | AI 분류 파이프라인 v1 (배경 제거 + 카테고리 분류 마이크로서비스)            | US-04   | `item-register` |
@@ -80,7 +80,7 @@
 
 | ID    | 작업                                                                         | 관련 US             | Slug            |
 | ----- | ---------------------------------------------------------------------------- | ------------------- | --------------- |
-| FE-07 | 로그인 화면 (Supabase Flutter SDK — 카카오·애플·이메일 흐름, 약관·14세 동의) | US-01               | `auth-login`    |
+| FE-07 | 가입·로그인 UI (번호 입력→OTP→PIN 설정→생체등록 다이얼로그, PIN 잠금·재설정·번호 변경·30일 배너) | US-01 | `auth-login` — ✅ 완료 |
 | FE-08 | 카메라·갤러리 진입 UI + 권한 처리                                            | US-02               | `item-register` |
 | FE-09 | 등록 진행 화면 — 미리보기·재촬영·취소                                        | US-02               | `item-register` |
 | FE-10 | 멀티셀렉트(최대 20장) + 백그라운드 일괄 업로드 진행률                        | US-03               | `item-register` |
@@ -160,7 +160,7 @@ FE-01·02·03·04·05·06 ─────────────┴─▶ FE-07
 1. **`backend-foundation`** (BE-01·02·03·05) — ✅ 이미 완료. 추가로 Sentry·R2 실 구현은 후속 slug에서.
 2. **`mobile-foundation`** (FE-01~06) — 디자인 시스템·라우팅·Riverpod·API 클라이언트.
 3. **`ci-foundation`** (INF-01) — GitHub Actions 골격. 이후 모든 PR에 자동 적용.
-4. **`auth-login`** (BE-06·07, FE-07) — Week 1 후반 진입 가능. backend-foundation·mobile-foundation 진행 중에 OAuth 발급·시크릿 준비.
+4. **`auth-login`** (BE-06·07, FE-07) — ✅ 완료(보강 1라운드 포함). 운영 전에 솔라피 발신번호 등록 + Fly secrets(JWT_SECRET·SOLAPI_*) + `prisma migrate dev --name auth-hardening` 1회 실행 필요.
 
 이렇게 잡으면 Week 1 끝나는 시점에 "DB 마이그레이션 통과 + API 부팅 + 첫 화면 토큰 통과 + CI 그린"이 모두 보입니다.
 
@@ -176,7 +176,7 @@ feature-\_ 스킬은 slug 단위로 동작한다. 각 slug별 구성 작업·관
 | `mobile-foundation`  | FE-01, FE-02, FE-03, FE-04, FE-06                      | 인프라              | —            | 대기         |
 | `ci-foundation`      | INF-01                                                 | 인프라              | —            | 대기         |
 | `analytics-pipeline` | BE-04, FE-05, BE-22                                    | US-14               | —            | BE-04만 완료 |
-| `auth-login`         | BE-06, BE-07, FE-07                                    | US-01               | —            | 대기         |
+| `auth-login`         | BE-06, BE-07, FE-07 (SMS+PIN+생체)                     | US-01               | —            | ✅ 보강 1라운드 완료 (잔여 OPEN 7건) |
 | `item-register`      | BE-08, BE-09, BE-10, BE-11, FE-08, FE-09, FE-10, FE-11 | US-02, US-03, US-04 | T1·T4        | 대기         |
 | `closet-browse`      | BE-12, BE-13, FE-12, FE-13, FE-14                      | US-06, US-07        | —            | 대기         |
 | `outfit-coordinate`  | BE-14, BE-15, FE-15, FE-16                             | US-08, US-09        | T3           | 대기         |
