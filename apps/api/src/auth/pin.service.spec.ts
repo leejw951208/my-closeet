@@ -61,18 +61,6 @@ describe("PinService", () => {
         await expect(svc.hash("abcdef")).rejects.toBeInstanceOf(BadRequestException)
     })
 
-    it("단순 패턴 PIN은 거부한다", async () => {
-        const { prisma } = makePrisma({
-            id: "u1",
-            pinHash: "",
-            pinFailedCount: 0,
-            pinLockedUntil: null,
-        })
-        const svc = new PinService(prisma)
-        await expect(svc.hash("111111")).rejects.toBeInstanceOf(BadRequestException)
-        await expect(svc.hash("123456")).rejects.toBeInstanceOf(BadRequestException)
-    })
-
     it("정상 PIN은 해시·검증 성공", async () => {
         const { prisma, users } = makePrisma({
             id: "u1",

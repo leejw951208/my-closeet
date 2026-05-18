@@ -13,23 +13,6 @@ const PIN_BCRYPT_COST = 12
 const PIN_LOCK_THRESHOLD = 5
 const PIN_LOCK_MINUTES = 10
 
-const SIMPLE_PIN_PATTERNS = new Set<string>([
-    "000000",
-    "111111",
-    "222222",
-    "333333",
-    "444444",
-    "555555",
-    "666666",
-    "777777",
-    "888888",
-    "999999",
-    "123456",
-    "654321",
-    "012345",
-    "543210",
-])
-
 export type PinVerifyResult =
     | { ok: true }
     | { ok: false; remainingAttempts: number }
@@ -112,12 +95,6 @@ export class PinService {
             throw new BadRequestException({
                 code: "invalid_pin_format",
                 message: "PIN은 6자리 숫자여야 합니다.",
-            })
-        }
-        if (SIMPLE_PIN_PATTERNS.has(pin)) {
-            throw new BadRequestException({
-                code: "weak_pin",
-                message: "쉽게 추측되는 PIN입니다. 다른 PIN을 사용해주세요.",
             })
         }
     }
