@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Founder"
+  short_description: "전략과 사업 모델 산출물을 순차 생성하는 기획 워크플로"
+  default_prompt: "Use $plan-founder to create strategy and business model outputs."

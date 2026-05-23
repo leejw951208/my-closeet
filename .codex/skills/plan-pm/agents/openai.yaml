@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan PM"
+  short_description: "PM 실행 산출물을 순차 생성하는 기획 워크플로"
+  default_prompt: "Use $plan-pm to create metrics, PRD, stories, and OKRs."

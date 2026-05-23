@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Verify"
+  short_description: "기능 구현 결과를 검증하고 리뷰를 작성하는 워크플로"
+  default_prompt: "Use $feature-verify to review and verify an implemented feature."

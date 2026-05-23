@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Risk"
+  short_description: "출시 리스크와 테스트 시나리오를 작성하는 기획 워크플로"
+  default_prompt: "Use $plan-risk to create launch risk and test scenario outputs."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Implement"
+  short_description: "기능 계획 문서를 바탕으로 구현을 진행하는 워크플로"
+  default_prompt: "Use $feature-implement to implement a planned feature from docs/features."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Marketing"
+  short_description: "마케팅과 GTM 산출물을 순차 생성하는 기획 워크플로"
+  default_prompt: "Use $plan-marketing to create GTM and value proposition outputs."

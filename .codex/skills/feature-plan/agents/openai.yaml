@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Plan"
+  short_description: "기능 계획 문서와 구현 계획을 생성하는 워크플로"
+  default_prompt: "Use $feature-plan to plan a new feature and create spec.md and plan.md."

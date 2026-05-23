@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Researcher"
+  short_description: "제품 리서치 산출물을 순차 생성하는 기획 워크플로"
+  default_prompt: "Use $plan-researcher to create product and market research outputs."

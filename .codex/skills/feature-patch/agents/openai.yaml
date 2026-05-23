@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Patch"
+  short_description: "검증 OPEN 항목을 보강하고 재검증을 준비하는 워크플로"
+  default_prompt: "Use $feature-patch to fix OPEN review items for a feature."

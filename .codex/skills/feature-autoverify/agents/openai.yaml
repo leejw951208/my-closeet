@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Autoverify"
+  short_description: "검증과 보강 루프를 자동으로 진행하는 워크플로"
+  default_prompt: "Use $feature-autoverify to run verify-patch loops for a feature."
