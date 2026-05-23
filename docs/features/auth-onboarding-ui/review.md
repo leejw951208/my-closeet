@@ -5,9 +5,11 @@
 ## 리뷰 개요
 
 - 일자: 2026-05-18 (검증 완료 — autoverify 라운드 2 종결)
+- 최신 UI/UX 보강: 2026-05-23 현재 구현 범위 점검 후 OTP 번호 변경 액션, 번호 변경 단계별 CTA 가드, 인증 완료 홈 CTA 보강
 - Spec: docs/features/auth-onboarding-ui/spec.md
 - Plan: docs/features/auth-onboarding-ui/plan.md
 - 자동 검증: `flutter analyze` 0 issue, `flutter test` 37 pass
+- 최신 검증: `mise exec -- flutter analyze` No issues found, `mise exec -- flutter test` 40 pass
 - 잔여 OPEN 0건. 본 슬러그 범위 밖 항목(사용자 수동·후속 슬러그·모킹 인프라 부재)은 CLOSED + 사유 명시로 처리
 
 ---
@@ -25,9 +27,12 @@
 | CLOSED | MEDIUM | CHANGED | F7 | PIN 재설정 진입 화면. mockup Tr_PinReset(새 PIN 입력 화면)은 `pin_setup_screen.dart?mode=reset` 단계에서 dot indicator UI로 표현됨. 본 화면은 SMS 인증을 받기 위한 번호 재입력 진입 화면 | [pin_reset_screen.dart](apps/mobile/lib/features/auth/presentation/pin_reset_screen.dart), [pin_setup_screen.dart](apps/mobile/lib/features/auth/presentation/pin_setup_screen.dart) | 수용 가능. 흐름 책임을 두 화면이 나눠 갖고 있음 |
 | CLOSED | -     | DONE    | F8 | PIN 로그인 화면 폴리시(peach 헤더 + 입력 카드 + PrimaryButton) | [pin_login_screen.dart](apps/mobile/lib/features/auth/presentation/pin_login_screen.dart) | "마지막 번호 마스킹 표시"는 미인증 상태에서 표시할 데이터가 없어 후속 슬러그로 분리 |
 | CLOSED | -     | DONE    | F9 | 휴대폰 번호 변경 화면 폴리시 + 30일 1회 배너 | [phone_change_screen.dart](apps/mobile/lib/features/auth/presentation/phone_change_screen.dart) | - |
+| CLOSED | LOW   | DONE    | F10 | OTP 화면의 `번호 변경` affordance | [otp_input_screen.dart](apps/mobile/lib/features/auth/presentation/otp_input_screen.dart) | 링크처럼 보이는 텍스트에 실제 이전 번호 입력 화면 이동 동작과 underline 처리 추가 |
+| CLOSED | MEDIUM | DONE   | F11 | 휴대폰 번호 변경 단계별 입력 가드 | [phone_change_screen.dart](apps/mobile/lib/features/auth/presentation/phone_change_screen.dart) | 현재 OTP 6자리, 새 번호 11자리, 새 OTP 6자리 조건으로 CTA 활성화 제한 |
+| CLOSED | LOW   | DONE    | F12 | 인증 완료 홈 최소 상태 | [router.dart](apps/mobile/lib/app/router.dart) | 단순 `홈` 텍스트 대신 완료 메시지와 다음 행동 CTA 제공 |
 | CLOSED | LOW   | CHANGED | -  | 시스템 다크 모드 라이트 강제 미적용. 신규 화면은 AppColors 토큰 직접 참조로 라이트 표시되나 AppBar/시스템 영역은 다크 | [app_theme.dart:18-29](apps/mobile/lib/core/theme/app_theme.dart) | 수용 가능. 강제 라이트는 [theme_test.dart](apps/mobile/test/core/theme_test.dart) 회귀를 동반하므로 별도 슬러그에서 토글로 처리 |
 
-**요약:** DONE 7 / PARTIAL 0 / NOT DONE 0 / CHANGED 3
+**요약:** DONE 10 / PARTIAL 0 / NOT DONE 0 / CHANGED 3
 
 ---
 
@@ -77,6 +82,9 @@
 | CLOSED | -     | TESTED   | #10 생체 다이얼로그 "나중에" → false | [auth_screens_test.dart](apps/mobile/test/features/auth_screens_test.dart) | - |
 | CLOSED | -     | TESTED   | #11 기기 미지원 시 다이얼로그 미노출 | [auth_screens_test.dart](apps/mobile/test/features/auth_screens_test.dart) | - |
 | CLOSED | -     | TESTED   | #12 PIN 재설정 mint 카드 노출 | [auth_screens_test.dart](apps/mobile/test/features/auth_screens_test.dart) | - |
+| CLOSED | -     | TESTED   | #16 OTP 번호 변경 텍스트 → 번호 입력 화면 이동 | [auth_screens_test.dart](apps/mobile/test/features/auth_screens_test.dart) | - |
+| CLOSED | -     | TESTED   | #17 번호 변경 단계별 CTA 활성 조건 | [auth_screens_test.dart](apps/mobile/test/features/auth_screens_test.dart) | - |
+| CLOSED | -     | TESTED   | #18 인증 완료 홈 CTA 노출 | [router_test.dart](apps/mobile/test/app/router_test.dart) | - |
 | CLOSED | -     | TESTED   | #13 회귀 기존 위젯 테스트 | `flutter test` 35 pass | - |
 | CLOSED | -     | TESTED   | #14 flutter analyze 0 issue | analyze | - |
 | CLOSED | LOW   | UNTESTED | #15 실기기 시각 확인 | - | T304와 동일. 사용자 수동 단계로 본 슬러그 범위 밖 |
@@ -96,6 +104,9 @@
 | CLOSED | LOW    | 7 | QA   | [otp_input_screen.dart:135-145](apps/mobile/lib/features/auth/presentation/otp_input_screen.dart) | `_maskPhone` 비한국 번호 케이스에서 raw 노출 가능 | 한국 번호 한정 서비스 정책상 영향 없음. 다국가 진입 시 후속 슬러그에서 마스킹 폴백 추가 |
 | CLOSED | LOW    | 6 | DX   | [pin_login_screen.dart](apps/mobile/lib/features/auth/presentation/pin_login_screen.dart) | spec F8 "좌상단 사용자 마지막 번호 마스킹 표시" 미구현 | SecureStorage 저장 흐름이 본 슬러그 범위 초과. 후속 슬러그에서 처리 |
 | CLOSED | LOW    | 7 | DX   | [phone_change_screen.dart:90-110](apps/mobile/lib/features/auth/presentation/phone_change_screen.dart) | 30일 1회 카피만 표시, 백엔드 쿨다운 체크 미연동 | 백엔드 연동은 별도 슬러그(서버 423/409 응답 연동) |
+| CLOSED | MEDIUM | 8 | QA   | [phone_change_screen.dart](apps/mobile/lib/features/auth/presentation/phone_change_screen.dart) | 번호 변경 CTA가 입력값 유효성과 무관하게 다음 단계로 진행 가능 | 현재 OTP·새 번호·새 OTP 유효성 조건으로 CTA 활성화를 제한하고 위젯 테스트 추가 |
+| CLOSED | LOW    | 8 | UX   | [otp_input_screen.dart](apps/mobile/lib/features/auth/presentation/otp_input_screen.dart) | `번호 변경` 텍스트가 링크처럼 보이나 동작 없음 | 이전 화면 pop 또는 `/auth/phone` 이동 동작 추가 |
+| CLOSED | LOW    | 7 | UX   | [router.dart](apps/mobile/lib/app/router.dart) | 인증 완료 후 홈 placeholder가 너무 빈약함 | 완료 메시지와 `옷장 확인하기`, `휴대폰 번호 변경` CTA 추가 |
 | CLOSED | -     | 8 | SECURITY | [biometric_prompt_dialog.dart](apps/mobile/lib/features/auth/presentation/biometric_prompt_dialog.dart) | local_auth 실패 시 false 반환 — 안전 | - |
 | CLOSED | -     | 7 | SECURITY | [pin_setup_screen.dart](apps/mobile/lib/features/auth/presentation/pin_setup_screen.dart) | PIN obscureText + dot indicator. plaintext 미노출 | - |
 | CLOSED | -     | 7 | SECURITY | [pin_login_screen.dart](apps/mobile/lib/features/auth/presentation/pin_login_screen.dart) | 423 잠금·remainingAttempts 핸들링 기존 로직 유지 | - |
@@ -113,8 +124,8 @@
 
 자동 QA 도구(gstack `qa-only`)는 라이브 웹 URL을 전제로 동작하며, 본 슬러그는 Flutter 모바일 화면 변경이라 적용 대상이 아니다. 대신 다음으로 대체.
 
-- **단위/위젯 테스트.** `flutter test` 35건 모두 pass. 회귀 0건. 신규 6건 추가(공용 위젯 6 + 화면 6).
-- **정적 분석.** `flutter analyze` 0 issue.
+- **단위/위젯 테스트.** `flutter test` 40건 모두 pass. 회귀 0건.
+- **정적 분석.** `flutter analyze` No issues found.
 - **수동 시나리오.** T304(실기기 6 화면 시각 확인)가 남아 있으며 사용자 수동 단계로 분류.
 - **patch 라운드 1 변경.** Offstage→Opacity 입력 위젯 교체로 시뮬레이터/실기기에서 IME 연결 정상화 기대. 실기기 확인 시 입력 가능 여부 우선 검증 권고.
 

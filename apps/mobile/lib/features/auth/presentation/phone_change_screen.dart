@@ -32,6 +32,27 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
     bool _busy = false;
     String? _error;
 
+    bool get _currentCodeValid => _currentCodeCtl.text.length == 6;
+
+    bool get _newPhoneValid {
+        final digits = _newPhoneCtl.text.replaceAll(RegExp(r'\D'), '');
+        return digits.length == 11 && digits.startsWith('010');
+    }
+
+    bool get _newCodeValid => _newCodeCtl.text.length == 6;
+
+    @override
+    void initState() {
+        super.initState();
+        _currentCodeCtl.addListener(_refresh);
+        _newPhoneCtl.addListener(_refresh);
+        _newCodeCtl.addListener(_refresh);
+    }
+
+    void _refresh() {
+        if (mounted) setState(() {});
+    }
+
     String _normalize(String raw) {
         final digits = raw.replaceAll(RegExp(r'\D'), '');
         if (digits.startsWith('010') && digits.length == 11) {
@@ -56,6 +77,9 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
 
     @override
     void dispose() {
+        _currentCodeCtl.removeListener(_refresh);
+        _newPhoneCtl.removeListener(_refresh);
+        _newCodeCtl.removeListener(_refresh);
         _currentCodeCtl.dispose();
         _newPhoneCtl.dispose();
         _newCodeCtl.dispose();
@@ -122,7 +146,7 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
                             const SizedBox(height: 12),
                             PrimaryButton(
                                 label: '1) 현재 번호로 인증번호 발송',
-                                onPressed: _busy
+                                onPressed: _busy || auth.phoneNumber == null
                                     ? null
                                     : () => _run(() async {
                                           final r = await repo.sendOtp(
@@ -141,7 +165,9 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
                             const SizedBox(height: 12),
                             PrimaryButton(
                                 label: '2) 현재 번호 인증 확인',
-                                onPressed: _currentRequestId == null || _busy
+                                onPressed: _currentRequestId == null ||
+                                        !_currentCodeValid ||
+                                        _busy
                                     ? null
                                     : () => _run(() async {
                                           final v = await repo.verifyOtp(
@@ -163,7 +189,9 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
                             const SizedBox(height: 12),
                             PrimaryButton(
                                 label: '3) 새 번호로 인증번호 발송',
-                                onPressed: _currentSession == null || _busy
+                                onPressed: _currentSession == null ||
+                                        !_newPhoneValid ||
+                                        _busy
                                     ? null
                                     : () => _run(() async {
                                           final phone = _normalize(_newPhoneCtl.text.trim());
@@ -182,7 +210,9 @@ class _PhoneChangeScreenState extends ConsumerState<PhoneChangeScreen> {
                             const SizedBox(height: 12),
                             PrimaryButton(
                                 label: '4) 번호 변경 완료',
-                                onPressed: _newRequestId == null || _busy
+                                onPressed: _newRequestId == null ||
+                                        !_newCodeValid ||
+                                        _busy
                                     ? null
                                     : () => _run(() async {
                                           final v = await repo.verifyOtp(

@@ -168,20 +168,32 @@ class _OtpInputScreenState extends ConsumerState<OtpInputScreen> {
                             const Text('받으신 인증번호를\n입력해주세요',
                                 style: AppTypography.heading800),
                             const SizedBox(height: 10),
-                            Text.rich(
-                                TextSpan(
-                                    style: AppTypography.body500,
-                                    children: [
-                                        TextSpan(text: '${_maskPhone(flow.phoneNumber)} 으로 보냈어요 · '),
-                                        const TextSpan(
-                                            text: '번호 변경',
-                                            style: TextStyle(
-                                                color: AppColors.peachInk,
-                                                fontWeight: FontWeight.w700,
+                            Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                    Text(
+                                        '${_maskPhone(flow.phoneNumber)} 으로 보냈어요 · ',
+                                        style: AppTypography.body500,
+                                    ),
+                                    GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
+                                        onTap: context.canPop()
+                                            ? () => context.pop()
+                                            : () => context.go('/auth/phone'),
+                                        child: const Padding(
+                                            padding: EdgeInsets.symmetric(vertical: 4),
+                                            child: Text(
+                                                '번호 변경',
+                                                style: TextStyle(
+                                                    color: AppColors.peachInk,
+                                                    fontWeight: FontWeight.w700,
+                                                    decoration: TextDecoration.underline,
+                                                    decorationColor: AppColors.peachInk,
+                                                ),
                                             ),
                                         ),
-                                    ],
-                                ),
+                                    ),
+                                ],
                             ),
                             if (flow.devCode != null) ...[
                                 const SizedBox(height: 12),

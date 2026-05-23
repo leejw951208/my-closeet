@@ -5,15 +5,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:my_closet_mobile/core/storage/secure_token_storage.dart';
 import 'package:my_closet_mobile/core/theme/app_colors.dart';
+import 'package:my_closet_mobile/features/auth/auth_state.dart';
+import 'package:my_closet_mobile/features/auth/data/auth_api.dart';
+import 'package:my_closet_mobile/features/auth/data/auth_prefs.dart';
+import 'package:my_closet_mobile/features/auth/data/auth_repository.dart';
 import 'package:my_closet_mobile/features/auth/presentation/biometric_prompt_dialog.dart';
 import 'package:my_closet_mobile/features/auth/presentation/onboarding_consent_screen.dart';
+import 'package:my_closet_mobile/features/auth/presentation/otp_input_screen.dart';
+import 'package:my_closet_mobile/features/auth/presentation/phone_change_screen.dart';
 import 'package:my_closet_mobile/features/auth/presentation/phone_input_screen.dart';
 import 'package:my_closet_mobile/features/auth/presentation/pin_reset_screen.dart';
 import 'package:my_closet_mobile/features/auth/presentation/pin_setup_screen.dart';
 import 'package:my_closet_mobile/features/auth/presentation/signup_flow_state.dart';
 import 'package:my_closet_mobile/shared/widgets/primary_button.dart';
 import 'package:my_closet_mobile/shared/widgets/soft_card.dart';
+
+import '../helpers/memory_prefs.dart';
 
 Widget _wrap(Widget child, {List<Override> overrides = const []}) {
     final router = GoRouter(
@@ -23,6 +32,69 @@ Widget _wrap(Widget child, {List<Override> overrides = const []}) {
         overrides: overrides,
         child: MaterialApp.router(routerConfig: router),
     );
+}
+
+class _MemoryStorage implements SecureTokenStorage {
+    String? _access;
+    String? _refresh;
+    @override
+    Future<String?> readAccessToken() async => _access;
+    @override
+    Future<String?> readRefreshToken() async => _refresh;
+    @override
+    Future<void> write({required String accessToken, String? refreshToken}) async {
+        _access = accessToken;
+        if (refreshToken != null) _refresh = refreshToken;
+    }
+    @override
+    Future<void> clear() async {
+        _access = null;
+        _refresh = null;
+    }
+}
+
+class _AuthScreenRepo implements AuthRepository {
+    int sendOtpCount = 0;
+    int verifyOtpCount = 0;
+
+    @override
+    Future<OtpRequestResult> sendOtp(String phoneNumber, String purpose) async {
+        sendOtpCount++;
+        return OtpRequestResult(
+            requestId: 'request-$sendOtpCount',
+            expiresInSec: 300,
+        );
+    }
+
+    @override
+    Future<OtpVerifyResult> verifyOtp({
+        required String requestId,
+        required String code,
+        required String purpose,
+    }) async {
+        verifyOtpCount++;
+        return OtpVerifyResult(
+            otpSessionToken: 'session-$verifyOtpCount',
+            isNewUser: false,
+        );
+    }
+
+    @override
+    Future<TokenPair> refresh(String refreshToken) async =>
+        const TokenPair(accessToken: 'new-a', refreshToken: 'new-r');
+    @override
+    Future<UserMe> me([String? bearer]) async =>
+        const UserMe(id: 'u1', phoneNumber: '+821011112222');
+    @override
+    Future<UserMe> changePhone({
+        required String currentOtpSessionToken,
+        required String newOtpSessionToken,
+    }) async =>
+        const UserMe(id: 'u1', phoneNumber: '+821099998888');
+    @override
+    Future<void> logout(String refreshToken) async {}
+    @override
+    dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
 Future<void> _phoneSize(WidgetTester tester) async {
@@ -179,6 +251,101 @@ void main() {
         // 불일치 처리 결과: 1차 단계로 복귀, 에러 메시지 노출.
         expect(find.text('PIN 6자리를 입력해주세요'), findsOneWidget);
         expect(find.text('두 번 입력한 PIN이 달라요.'), findsOneWidget);
+    });
+
+    testWidgets('OTP 화면의 번호 변경 텍스트는 이전 번호 입력 화면으로 돌아간다', (tester) async {
+        await _phoneSize(tester);
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        container.read(signupFlowStateProvider.notifier).startOtp(
+            phoneNumber: '+821012345678',
+            requestId: 'r1',
+        );
+        final router = GoRouter(
+            initialLocation: '/auth/otp',
+            routes: [
+                GoRoute(path: '/auth/phone', builder: (_, __) => const PhoneInputScreen()),
+                GoRoute(path: '/auth/otp', builder: (_, __) => const OtpInputScreen()),
+            ],
+        );
+
+        await tester.pumpWidget(
+            UncontrolledProviderScope(
+                container: container,
+                child: MaterialApp.router(routerConfig: router),
+            ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('번호 변경'));
+        await tester.pumpAndSettle();
+
+        expect(router.routerDelegate.currentConfiguration.uri.toString(), '/auth/phone');
+        expect(find.text('휴대폰 번호를\n입력해주세요'), findsOneWidget);
+    });
+
+    testWidgets('휴대폰 번호 변경은 단계별 입력이 유효할 때만 다음 버튼이 활성화된다', (tester) async {
+        await _phoneSize(tester);
+        final storage = _MemoryStorage();
+        final repo = _AuthScreenRepo();
+        final container = ProviderContainer(
+            overrides: [
+                secureTokenStorageProvider.overrideWithValue(storage),
+                authPrefsProvider.overrideWithValue(MemoryPrefs()),
+                authRepositoryProvider.overrideWithValue(repo),
+            ],
+        );
+        addTearDown(container.dispose);
+        await container.read(authControllerProvider.notifier).setSession(
+            userId: 'u1',
+            phoneNumber: '+821011112222',
+            tokens: const TokenPair(accessToken: 'a', refreshToken: 'r'),
+        );
+        final router = GoRouter(
+            routes: [
+                GoRoute(path: '/', builder: (_, __) => const PhoneChangeScreen()),
+                GoRoute(path: '/auth/phone', builder: (_, __) => const PhoneInputScreen()),
+            ],
+        );
+
+        await tester.pumpWidget(
+            UncontrolledProviderScope(
+                container: container,
+                child: MaterialApp.router(routerConfig: router),
+            ),
+        );
+        await tester.pumpAndSettle();
+
+        PrimaryButton button(String label) =>
+            tester.widget<PrimaryButton>(find.widgetWithText(PrimaryButton, label));
+
+        expect(button('2) 현재 번호 인증 확인').onPressed, isNull);
+        expect(button('3) 새 번호로 인증번호 발송').onPressed, isNull);
+        expect(button('4) 번호 변경 완료').onPressed, isNull);
+
+        await tester.tap(find.widgetWithText(PrimaryButton, '1) 현재 번호로 인증번호 발송'));
+        await tester.pumpAndSettle();
+        expect(button('2) 현재 번호 인증 확인').onPressed, isNull);
+
+        await tester.enterText(find.byType(TextField).at(0), '123456');
+        await tester.pump();
+        expect(button('2) 현재 번호 인증 확인').onPressed, isNotNull);
+
+        await tester.tap(find.widgetWithText(PrimaryButton, '2) 현재 번호 인증 확인'));
+        await tester.pumpAndSettle();
+        expect(button('3) 새 번호로 인증번호 발송').onPressed, isNull);
+
+        await tester.enterText(find.byType(TextField).at(1), '01099998888');
+        await tester.pump();
+        expect(button('3) 새 번호로 인증번호 발송').onPressed, isNotNull);
+
+        await tester.tap(find.widgetWithText(PrimaryButton, '3) 새 번호로 인증번호 발송'));
+        await tester.pumpAndSettle();
+        expect(button('4) 번호 변경 완료').onPressed, isNull);
+
+        await tester.enterText(find.byType(TextField).at(2), '654321');
+        await tester.pump();
+        expect(button('4) 번호 변경 완료').onPressed, isNotNull);
     });
 
     testWidgets('showBiometricPromptDialog: 기기 미지원이면 null 반환(미노출)', (tester) async {

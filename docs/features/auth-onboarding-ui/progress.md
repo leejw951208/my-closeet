@@ -1,7 +1,7 @@
 # Progress. auth-onboarding-ui
 
-- 최근 업데이트. 2026-05-18
-- 현재 단계. 구현
+- 최근 업데이트. 2026-05-23
+- 현재 단계. 구현 + 현재 구현 범위 UI/UX 보강 완료
 
 ## 태스크 상태
 
@@ -36,4 +36,14 @@
 - [x] T302 신규 위젯 테스트 추가
 - [x] T303 flutter analyze 0 issue
 - [ ] T304 실기기 시각 확인 (수동, 사용자 단계)
-- [ ] T305 progress.md 갱신 (본 문서)
+- [x] T305 progress.md 갱신 (본 문서)
+
+## 보강 기록
+
+### 2026-05-23. 현재 구현 범위 UI/UX 점검 반영
+
+- `otp_input_screen.dart`의 `번호 변경` 텍스트에 실제 이동 동작을 연결하고 underline affordance를 추가했다.
+- `phone_change_screen.dart`의 단계별 CTA를 입력 유효성에 맞게 잠갔다. 현재 번호 OTP 6자리, 새 번호 `010` 11자리, 새 번호 OTP 6자리 조건이 충족되어야 다음 단계로 진행된다.
+- `router.dart`의 인증 완료 홈 placeholder를 완료 메시지와 다음 행동 CTA가 있는 최소 홈 상태로 개선했다.
+- `auth_screens_test.dart`, `router_test.dart`에 OTP 번호 변경 이동, 번호 변경 CTA 가드, 인증 완료 홈 CTA 테스트를 추가했다.
+- 검증 결과. `mise exec -- flutter analyze` No issues found, `mise exec -- flutter test` 40개 PASS.

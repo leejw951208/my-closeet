@@ -185,6 +185,7 @@ class _HomePlaceholderState extends ConsumerState<_HomePlaceholder> {
                 ],
             ),
             body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                     if (_bannerEvaluated && _showBanner)
                         MaterialBanner(
@@ -199,8 +200,45 @@ class _HomePlaceholderState extends ConsumerState<_HomePlaceholder> {
                                 ),
                             ],
                         ),
-                    const Expanded(
-                        child: Center(child: Text('홈')),
+                    Expanded(
+                        child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                    Icon(
+                                        Icons.checkroom,
+                                        size: 48,
+                                        color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                    const SizedBox(height: 18),
+                                    Text(
+                                        '로그인이 완료됐어요',
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                        ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                        '이제 내 옷장을 채울 준비가 됐습니다.',
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                    const SizedBox(height: 28),
+                                    FilledButton(
+                                        onPressed: () => context.push('/closet'),
+                                        child: const Text('옷장 확인하기'),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextButton(
+                                        onPressed: () => context.push('/settings/phone-change'),
+                                        child: const Text('휴대폰 번호 변경'),
+                                    ),
+                                ],
+                            ),
+                        ),
                     ),
                 ],
             ),

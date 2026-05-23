@@ -7,6 +7,8 @@
 - Plan: docs/features/auth-login/plan.md
 
 > **NOTE.** 이 리뷰는 보강 1라운드(`/feature-patch auth-login`) **이전** 스냅샷이다. 처리 결과는 [progress.md "보강 라운드 1"](progress.md) 참조. 잔여 OPEN 항목은 `/feature-verify auth-login` 재실행으로 재집계한다. 본 라운드에서 처리된 항목: 백엔드 critical 1·high 4·medium 3·low 2 + 모바일 PIN 모달/잠금/생체 가드/30일 배너 + 테스트 19건 신설. 잔여(다음 라운드/별도 슬러그): Sentry PII, 실기기 e2e, prisma migrate CI, JwtService @Global, T601 화면별 위젯 테스트, Appendix 2건.
+>
+> **UPDATE 2026-05-23.** 현재 구현 범위 UI/UX 점검으로 모바일 잔여 항목 일부를 추가 보강했다. OTP 화면 `번호 변경` 동작, 휴대폰 번호 변경 단계별 CTA 가드, 인증 완료 홈 CTA를 구현했고 `flutter analyze` No issues found, `flutter test` 40 pass를 확인했다. 상세는 [progress.md "보강 라운드 2"](progress.md) 참조.
 
 ---
 

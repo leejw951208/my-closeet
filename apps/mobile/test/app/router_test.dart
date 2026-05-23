@@ -96,4 +96,17 @@ void main() {
             AppRoute.home.path,
         );
     });
+
+    testWidgets('인증 후 홈은 완료 메시지와 다음 행동 CTA를 보여준다', (tester) async {
+        final storage = _MemoryStorage();
+        await storage.write(accessToken: 'a', refreshToken: 'r');
+        final c = _container(storage: storage);
+        addTearDown(c.dispose);
+
+        await _pumpApp(tester, c);
+
+        expect(find.text('로그인이 완료됐어요'), findsOneWidget);
+        expect(find.text('옷장 확인하기'), findsOneWidget);
+        expect(find.text('휴대폰 번호 변경'), findsWidgets);
+    });
 }

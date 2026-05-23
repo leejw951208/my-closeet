@@ -2,7 +2,7 @@
 
 ## 현재 단계
 
-보강 1라운드 완료 (verify → patch → verify 재실행 대기)
+보강 2라운드 완료 (현재 구현된 인증 UI/UX 점검 보강)
 
 ## 기능별 진행 현황
 
@@ -68,7 +68,7 @@
 | T401   | pin_login_screen.dart                                                          | ✅ 완료    |
 | T402   | 앱 부팅 시 생체인식 자동 시도                                                  | ✅ 완료 (pin_login_screen.initState) |
 | T403   | PIN 3회 실패 안내 모달                                                         | ✅ 완료    |
-| T404   | PIN 5회 실패 → 423 잠금 화면                                                  | 🟡 부분 (백엔드 423 응답·UI 안내는 구현, 별도 잠금 카운트다운 화면은 후속) |
+| T404   | PIN 5회 실패 → 423 잠금 화면                                                  | ✅ 완료 (백엔드 423 응답·lockedUntil 카운트다운 UI, 입력 비활성화) |
 | T405   | PIN 재설정 플로우                                                              | ✅ 완료 (pin_reset_screen → otp_input(RESET) → pin_setup(reset)) |
 | T406   | Dio 인터셉터 자동 refresh                                                      | ✅ 완료 (기존 AuthInterceptor 재사용) |
 
@@ -76,8 +76,8 @@
 
 | 태스크 | 설명                                                                          | 상태       |
 | ------ | ----------------------------------------------------------------------------- | ---------- |
-| T501   | phone_change_screen.dart                                                       | ✅ 완료    |
-| T502   | 30일 미접속 배너                                                               | 🟡 부분 (UI 자리는 router._HomePlaceholder에 마련, 실제 lastSignInAt 비교 로직은 후속) |
+| T501   | phone_change_screen.dart                                                       | ✅ 완료 (단계별 OTP/번호 입력 유효성에 따라 CTA 활성화) |
+| T502   | 30일 미접속 배너                                                               | ✅ 완료 (`lastSignInAt` 30일 경과 + 하루 1회 dismiss) |
 | T503   | (T309에 통합)                                                                  | ✅ 통합 완료 |
 | T504   | logout_action.dart                                                             | ✅ 완료 (AppBar IconButton + AuthController.signOut) |
 
@@ -85,7 +85,7 @@
 
 | 태스크 | 설명                                                                          | 상태       |
 | ------ | ----------------------------------------------------------------------------- | ---------- |
-| T601   | flutter 위젯 테스트                                                           | 🟡 부분 (auth_state·router·interceptor·theme 12 케이스 갱신, 화면별 위젯 테스트는 후속) |
+| T601   | flutter 위젯 테스트                                                           | ✅ 완료 (인증 화면·라우터·번호 변경 UX 포함 40개 케이스 PASS) |
 | T602   | api 단위 테스트 합산                                                          | ✅ 완료 (25건 PASS) |
 | T603   | 실기기 수동 e2e                                                               | ⛔ 보류 (솔라피 키·실기기 필요한 운영자 단계) |
 | T604   | docs/runbooks/auth-otp.md                                                     | ✅ 완료    |
@@ -115,8 +115,7 @@
 - **솔라피 API 키·발신번호 미발급.** 런북(`docs/runbooks/auth-otp.md`) 1절 참고. 키 등록 전에는 POST /auth/otp/send가 솔라피 단에서 401/403으로 실패.
 - **JWT_SECRET·Fly secrets 미등록.** 런북 2절 참고.
 - **bcrypt → bcryptjs 채택.** native 빌드 스크립트 승인이 필요해서 pure-JS bcryptjs로 전환. PIN cost 12, refresh cost 10 그대로.
-- **모바일 phone_change_screen async gap 경고 1건.** 기능 동작에는 무영향. 추후 mounted 가드 강화 시 수정.
-- **biometric 등록 별도 화면(T308) / 30일 배너 갱신(T502) / 423 잠금 카운트다운 화면(T404).** UX 디테일 보강이 필요한 항목. MVP 출시 후 첫 피드백 라운드에서 우선순위 재평가.
+- **biometric 등록 별도 화면(T308).** 가입 직후 다이얼로그와 로그인 자동 시도는 구현됨. 설정 화면의 on/off 토글은 후속 UX 범위.
 
 ## 보강 라운드 1 (2026-05-18, /feature-verify → /feature-patch)
 
@@ -173,22 +172,39 @@ pnpm --filter @my-closet/database exec prisma migrate dev --name auth-hardening
 
 ### 잔여 OPEN (다음 라운드 또는 별도 슬러그)
 
-- T601 모바일 화면별 위젯 테스트 6건 (다음 라운드 권장)
 - T603 실기기 e2e (운영자 단계)
 - T605 백엔드 Sentry PII filter (별도 슬러그)
 - DX. prisma migrate CI 게이트 (인프라 슬러그)
 - OTHER. `AuthModule @Global()` 적용 (후속 슬러그)
 - Appendix. PIN 패턴 정규식 확장, OTP 첫 자리 0 제한
 
+## 보강 라운드 2 (2026-05-23, 현재 구현 범위 UI/UX 점검)
+
+### 모바일 UI/UX 보강
+
+| 항목 | 위치 | 변경 |
+| ---- | ---- | ---- |
+| 번호 변경 단계별 CTA 가드 | `phone_change_screen.dart` | 현재 번호 OTP 6자리, 새 번호 `010` 11자리, 새 번호 OTP 6자리 조건을 만족할 때만 각 다음 단계 버튼 활성화. 서버 에러 전 사용자가 입력 오류를 바로 알 수 있게 함. |
+| OTP 번호 변경 액션 | `otp_input_screen.dart` | 링크처럼 보이던 `번호 변경` 텍스트에 실제 뒤로가기/번호 입력 화면 이동 동작과 underline affordance 추가. |
+| 인증 완료 홈 상태 | `router.dart` | 단순 `홈` 텍스트 대신 로그인 완료 메시지, 옷장 확인 CTA, 휴대폰 번호 변경 CTA를 표시. 전체 홈 기능 구현 전에도 인증 완료 감각과 다음 행동을 제공. |
+
+### 테스트 보강
+
+| 항목 | 위치 | 케이스 |
+| ---- | ---- | ------ |
+| OTP 번호 변경 라우팅 | `auth_screens_test.dart` | `번호 변경` 탭 시 `/auth/phone` 이동 확인. |
+| 번호 변경 CTA 활성 조건 | `auth_screens_test.dart` | 현재 OTP, 새 번호, 새 OTP가 유효할 때만 단계별 CTA 활성화 확인. |
+| 인증 완료 홈 CTA | `router_test.dart` | 인증 상태 홈에서 완료 메시지와 다음 행동 CTA 노출 확인. |
+
 ## 최근 업데이트
 
-2026-05-18 (보강 1라운드 완료)
+2026-05-23 (보강 2라운드 완료)
 
 ## 테스트 결과
 
 - **백엔드 jest.** 46개 케이스 / 6개 스위트, 0 실패 (보강 후)
-- **모바일 flutter test.** 23개 케이스, 0 실패 (보강 후)
-- **flutter analyze.** 0 error, 3 info (스타일 권고)
+- **모바일 flutter test.** 40개 케이스, 0 실패 (보강 2라운드 후)
+- **flutter analyze.** No issues found (보강 2라운드 후)
 - **tsc --noEmit (apps/api).** 0 error
 
 ## 다음 액션 아이템
