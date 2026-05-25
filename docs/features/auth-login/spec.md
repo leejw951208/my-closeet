@@ -154,7 +154,9 @@ PIN을 잊었거나 잠금에 걸린 사용자가 SMS 재인증으로 PIN을 새
 
 - 입력. `{ requestId: string, code: string }` (6자리 숫자)
 - 출력 (신규 가입 진입). `{ otpSessionToken: string, isNewUser: true }` — PIN 설정 단계로 진입할 5분 토큰
-- 출력 (기존 사용자 — PIN 재설정 흐름). `{ otpSessionToken: string, isNewUser: false }`
+- 출력 (기존 사용자). `{ otpSessionToken: string, isNewUser: false }`
+    - `purpose=SIGNUP` 이면 모바일은 중복 가입을 시도하지 않고 해당 번호를 마지막 로그인 번호로 저장한 뒤 PIN 로그인 화면으로 보낸다.
+    - `purpose=RESET` 이면 모바일은 PIN 재설정의 새 PIN 설정 단계로 보낸다.
 
 **POST /auth/signup/complete**
 
@@ -216,6 +218,7 @@ PIN을 잊었거나 잠금에 걸린 사용자가 SMS 재인증으로 PIN을 새
 - OTP 코드 불일치 → 400. 같은 `requestId` 에 대한 verify 실패는 누적되며 **5회 도달 시 강제 consume + 429** ("인증 시도 횟수를 초과했습니다. 다시 발송해주세요.")
 - OTP 만료 → 410 Gone, "인증번호가 만료되었습니다."
 - 솔라피 API 실패 → 502, "잠시 후 다시 시도해주세요." + Sentry 알림
+- 가입 흐름에서 이미 등록된 번호의 OTP를 검증한 경우 → `isNewUser=false`, 모바일은 PIN 로그인으로 이동
 - 새 번호가 이미 다른 계정에 등록됨 → 409 Conflict, "이미 사용 중인 번호입니다."
 - PIN 3회 실패 → 안내 모달 노출, 시도는 계속 가능
 - PIN 5회 실패 → 423 Locked, 10분 잠금, "SMS 재인증으로 PIN 재설정"

@@ -2,7 +2,7 @@
 
 ## 현재 단계
 
-보강 2라운드 완료 (현재 구현된 인증 UI/UX 점검 보강)
+보강 3라운드 완료 (기존 가입 번호의 SIGNUP OTP 라우팅 보강)
 
 ## 기능별 진행 현황
 
@@ -196,15 +196,29 @@ pnpm --filter @my-closet/database exec prisma migrate dev --name auth-hardening
 | 번호 변경 CTA 활성 조건 | `auth_screens_test.dart` | 현재 OTP, 새 번호, 새 OTP가 유효할 때만 단계별 CTA 활성화 확인. |
 | 인증 완료 홈 CTA | `router_test.dart` | 인증 상태 홈에서 완료 메시지와 다음 행동 CTA 노출 확인. |
 
+## 보강 라운드 3 (2026-05-25, 기존 가입 번호 SIGNUP OTP 라우팅)
+
+### 모바일 인증 흐름 보강
+
+| 항목 | 위치 | 변경 |
+| ---- | ---- | ---- |
+| 기존 사용자 SIGNUP OTP 분기 | `otp_input_screen.dart`, `auth_state.dart` | `verifyOtp` 결과가 `isNewUser=false`이면 `/auth/signup/complete`를 호출하지 않고 해당 번호를 마지막 로그인 번호로 저장한 뒤 `/auth/pin-login`으로 이동. 이미 가입된 번호에서 PIN 설정 실패 메시지가 뜨던 문제를 해소. |
+
+### 테스트 보강
+
+| 항목 | 위치 | 케이스 |
+| ---- | ---- | ------ |
+| 기존 사용자 OTP 라우팅 | `auth_screens_test.dart` | SIGNUP OTP 검증 결과가 기존 사용자이면 PIN 로그인 화면으로 이동하고 `lastKnownPhoneNumber` 및 prefs에 번호가 저장되는지 확인. |
+
 ## 최근 업데이트
 
-2026-05-23 (보강 2라운드 완료)
+2026-05-25 (보강 3라운드 완료)
 
 ## 테스트 결과
 
 - **백엔드 jest.** 46개 케이스 / 6개 스위트, 0 실패 (보강 후)
-- **모바일 flutter test.** 40개 케이스, 0 실패 (보강 2라운드 후)
-- **flutter analyze.** No issues found (보강 2라운드 후)
+- **모바일 flutter test.** `test/features/auth_screens_test.dart` 11개 케이스, 0 실패 (보강 3라운드 후 부분 회귀)
+- **flutter analyze.** No issues found (보강 3라운드 후)
 - **tsc --noEmit (apps/api).** 0 error
 
 ## 다음 액션 아이템

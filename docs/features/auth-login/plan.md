@@ -200,6 +200,9 @@
      │  { otpSessionToken,          │                       │                  │
      │    isNewUser: true }         │                       │                  │
      │◀─────────────────────────────┤                       │                  │
+     │  (isNewUser=false면          │                       │                  │
+     │   마지막 번호 저장 후        │                       │                  │
+     │   PIN 로그인 화면으로 이동)  │                       │                  │
      │                              │                       │                  │
      │  POST /auth/signup/complete  │                       │                  │
      │  { otpSessionToken, pin }    │                       │                  │
@@ -249,3 +252,4 @@
 | 18  | 솔라피 API 장애                                     | mock으로 throw                                | 502, Sentry 알림, 사용자엔 "잠시 후 다시 시도"              |
 | 19  | 로그아웃 후 재진입                                  | logout → 재실행                               | 로그인 화면, 생체인식만으론 진입 불가                       |
 | 20  | 동의 미체크 시 가입 차단                            | 온보딩 체크박스 미동의                        | 가입 완료 버튼 비활성화                                     |
+| 21  | 기존 가입 번호로 SIGNUP OTP 검증                    | 등록된 번호 → OTP 정확                        | PIN 설정이 아니라 PIN 로그인 화면으로 이동, 마지막 번호 저장 |

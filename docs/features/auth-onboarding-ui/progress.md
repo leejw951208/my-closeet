@@ -1,7 +1,7 @@
 # Progress. auth-onboarding-ui
 
-- 최근 업데이트. 2026-05-23
-- 현재 단계. 구현 + 현재 구현 범위 UI/UX 보강 완료
+- 최근 업데이트. 2026-05-25
+- 현재 단계. 구현 + 기존 가입 번호 OTP 라우팅 보강 완료
 
 ## 태스크 상태
 
@@ -47,3 +47,10 @@
 - `router.dart`의 인증 완료 홈 placeholder를 완료 메시지와 다음 행동 CTA가 있는 최소 홈 상태로 개선했다.
 - `auth_screens_test.dart`, `router_test.dart`에 OTP 번호 변경 이동, 번호 변경 CTA 가드, 인증 완료 홈 CTA 테스트를 추가했다.
 - 검증 결과. `mise exec -- flutter analyze` No issues found, `mise exec -- flutter test` 40개 PASS.
+
+### 2026-05-25. 기존 가입 번호 OTP 라우팅 반영
+
+- SIGNUP OTP 검증 결과가 기존 사용자(`isNewUser=false`)이면 PIN 설정 화면 대신 PIN 로그인 화면으로 이동하도록 했다.
+- PIN 로그인에서 사용할 수 있게 OTP 흐름의 휴대폰 번호를 마지막 로그인 번호로 저장한다.
+- `auth_screens_test.dart`에 기존 사용자 SIGNUP OTP 라우팅 회귀 테스트를 추가했다.
+- 검증 결과. `mise exec -- flutter analyze` No issues found, `mise exec -- flutter test test/features/auth_screens_test.dart` 11개 PASS.
